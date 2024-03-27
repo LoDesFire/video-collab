@@ -9,7 +9,7 @@ type UserContextType = {
     user: UserProfile | null;
     token: string | null;
     loginUser: (username: string, password: string) => void;
-    registerUser: (email: string, username: string, password: string) => void;
+    registerUser: (username: string, password: string) => void;
     logout: () => void;
     isLoggedIn: () => boolean;
 };
@@ -39,40 +39,44 @@ export const UserProvider = ({children}: Props) => {
         username: string,
         password: string
     ) => {
+        const userObj: UserProfile = {
+            username: "Test",
+        }
+        localStorage.setItem("user", JSON.stringify(userObj))
+        setUser(userObj)
+        localStorage.setItem("token", "token")
+        setToken("token")
         await loginAPI(username, password)
             .then((res) => {
                 if (res) {
                     localStorage.setItem("token", res?.data.token)
                     const userObj: UserProfile = {
                         username: res?.data.username,
-                        email: res?.data.email
                     }
                     localStorage.setItem("user", JSON.stringify(userObj));
                     setToken(res?.data.username)
                     setUser(userObj!)
-                    navigate("/");
+                    navigate("/profile");
                 }
-            }).catch((e) => toast.error("Ошибка сервера "));
+            }).catch((e) => toast.error("Ошибка сервера"));
     }
 
 
     const registerUser = async (
-        email: string,
         username: string,
         password: string
     ) => {
-        await registerAPI(email, username, password)
+        await registerAPI(username, password)
             .then((res) => {
                 if (res) {
                     localStorage.setItem("token", res?.data.username)
                     const userObj: UserProfile = {
                         username: res?.data.username,
-                        email: res?.data.email
                     }
                     localStorage.setItem("user", JSON.stringify(userObj));
                     setToken(res?.data.username)
                     setUser(userObj!)
-                    navigate("/");
+                    navigate("/profile");
                 }
             }).catch((e) => toast.error("Ошибка сервера"));
     }

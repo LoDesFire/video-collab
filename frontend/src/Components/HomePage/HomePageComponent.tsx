@@ -1,10 +1,15 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import {Link} from "react-router-dom";
 import hero from "./hero.png";
+import {useAuth} from "../../Context/useAuth";
 
-interface Props {}
+interface Props {
+}
 
 const HomePageComponent = (props: Props) => {
+
+    const {isLoggedIn} = useAuth()
+
     return (
         <section id="hero">
             <div className="container flex flex-col-reverse mx-auto p-8 lg:flex-row">
@@ -17,15 +22,15 @@ const HomePageComponent = (props: Props) => {
                     </p>
                     <div className="mx-auto lg:mx-0">
                         <Link
-                            to="/register"
-                            className="py-5 px-10 text-2xl font-bold text-white bg-lightGreen rounded lg:py-4 hover:opacity-70"
+                            to={isLoggedIn() ? "/profile" : "/register"}
+                            className="py-5 px-10 text-2xl font-bold text-white bg-green-700 rounded lg:py-4 hover:opacity-70"
                         >
                             Поехали!
                         </Link>
                     </div>
                 </div>
                 <div className="mb-24 mx-auto md:w-180 md:px-10 lg:mb-0 lg:w-1/2">
-                    <img src={hero} alt="" />
+                    <img src={hero} alt=""/>
                 </div>
             </div>
         </section>
