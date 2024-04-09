@@ -9,4 +9,7 @@ public interface IUserRepository
 
     public Task<AuthResult> CreateAsync(AuthUserDto authUserDto);
     public Task<AuthResult> LoginAsync(AuthUserDto authUserDto);
+
+    public Task<bool> PinMovieAsync(string id, int movieId);
+    public Task<bool> UnpinMovieAsync(string id, int movieId);
 }

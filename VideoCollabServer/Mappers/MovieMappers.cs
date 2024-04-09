@@ -20,7 +20,7 @@ public static class MovieMappers
         {
             Id = movieModel.Id,
             Description = movieModel.Description,
-            ImageUrl = movieModel.Links.Find(l => l.Type == LinkType.Image || l.Movie?.Id == movieModel.Id)?.Url,
+            ImageUrl = movieModel.Links.Find(l => l.Type == LinkType.Image && l.Movie?.Id == movieModel.Id)?.Url,
             Name = movieModel.Name
         };
     }
