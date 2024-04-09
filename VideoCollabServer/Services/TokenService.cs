@@ -16,20 +16,20 @@ public class TokenService: ITokenService
         _config = config;
         _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JWT:SigningKey"]!));
     }
-    public string GenerateToken(string username)
+    public string GenerateToken(string userId)
     {
         var claims = new List<Claim>
         {
-            new (JwtRegisteredClaimNames.GivenName, username),
+            new (JwtRegisteredClaimNames.NameId, userId)
         };
 
-        var creds = new SigningCredentials(_key, SecurityAlgorithms.HmacSha512Signature);
+        var credentials = new SigningCredentials(_key, SecurityAlgorithms.HmacSha512Signature);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
             Expires = DateTime.Now.AddDays(1),
-            SigningCredentials = creds,
+            SigningCredentials = credentials,
             Issuer = _config["JWT:Issuer"],
             Audience = _config["JWT:Audience"]
         };

@@ -1,5 +1,6 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VideoCollabServer.Dtos.User;
 using VideoCollabServer.Interfaces;
 
 namespace VideoCollabServer.Controllers;
@@ -15,27 +16,15 @@ public class UserController : ControllerBase
         _repository = repository;
     }
 
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] AuthUserDto authUserDto)
+    [Authorize]
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetUserProfile([FromRoute] string id)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+        var identity = HttpContext.User.Identity as ClaimsIdentity;
+        if (identity!.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value != id)
+            return Forbid();
         
-        var authResult = await _repository.LoginAsync(authUserDto);
-        
-        return authResult.Succeeded ? Ok(authResult.Token) : StatusCode(401, authResult.Errors);
+        var profileDto = await _repository.GetByIdAsync(id);
+        return Ok(profileDto);
     }
-
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] AuthUserDto authUserDto)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        var authResult = await _repository.CreateAsync(authUserDto);
-        
-        return authResult.Succeeded ? Ok(authResult.Token) : StatusCode(400, authResult.Errors);
-    }
-    
-    
 }

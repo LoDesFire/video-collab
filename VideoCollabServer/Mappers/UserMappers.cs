@@ -9,7 +9,6 @@ public static class UserMappers
     {
         return new UserProfileDto
         {
-            Id = userModel.Id,
             OwnedRooms = userModel.OwnedRooms.Select(r => r.ToProfileDto()).ToList(),
             PinnedMovies = userModel.PinnedMovies.Select(m => m.ToPinnedDto()).ToList(),
             Users = userModel.RecentCallUsers.Select(u => u.ToRecentCallDto()).ToList()
@@ -21,7 +20,7 @@ public static class UserMappers
         return new UserRecentCallDto
         {
             Id = userModel.Id,
-            UserName = userModel.UserName
+            Username = userModel.UserName
         };
     }
 }
