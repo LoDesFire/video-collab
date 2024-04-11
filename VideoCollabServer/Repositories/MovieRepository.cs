@@ -17,6 +17,16 @@ public class MovieRepository : IMovieRepository
         LinkRepository = linkRepository;
     }
 
+    public async Task DeleteMovieAsync(int movieId)
+    {
+        var movie = await Context.Movies.FindAsync(movieId);
+
+        if (movie == null)
+            return;
+        
+        Context.Remove(movie);
+    }
+    
     public async Task<CreatedMovieDto?> CreateMovieAsync(CreateMovieDto createMovieDto)
     {
         List<Link> movieLinks = new();

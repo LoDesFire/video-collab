@@ -87,6 +87,7 @@ builder.Services.AddScoped<ILinkRepository, LinkRepository>();
 builder.Services.AddScoped<IFileRepository, FileRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddSingleton<IHlsService, HlsService>();
 
 var app = builder.Build();
 
@@ -97,8 +98,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+app.UseCors(policy => policy.AllowAnyOrigin());
 
+app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 

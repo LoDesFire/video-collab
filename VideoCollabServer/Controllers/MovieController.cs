@@ -10,94 +10,72 @@ namespace VideoCollabServer.Controllers;
 
 [Route("api/movie")]
 [ApiController]
-public class MovieController: ControllerBase
+public class MovieController : ControllerBase
 {
     private readonly IMovieRepository _repository;
-    
-    public MovieController(IMovieRepository repository)
+    private readonly IHlsService _hlsService;
+
+    public MovieController(IMovieRepository repository, IHlsService hlsService)
     {
         _repository = repository;
+        _hlsService = hlsService;
     }
     
-    [HttpPost]
-    public async Task<IActionResult> AddFilm([FromBody] CreateMovieDto createMovieDto)
+    [HttpDelete]
+    public async Task<IActionResult> DeleteMovie([FromQuery][Required] int movieId)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState.GetErrorsList());
-        var createdMovieDto =  await _repository.CreateMovieAsync(createMovieDto);
-        
-        if (createdMovieDto == null)
-            return BadRequest(); 
-        
-        return Ok(createdMovieDto);
-    }
-    
-    [HttpPost("upload")]
-    [RequestSizeLimit(1024 * 1024 * 1024)]
-    public async Task<IActionResult> UploadFilm([FromQuery][Required] int movieId, [Required] IFormFile file)
-    {
-        var extension = file.FileName.Split(".").Last();
+        await _repository.DeleteMovieAsync(movieId);
+        _hlsService.DeleteMovie(movieId);
 
-        var supportedVideoExtensions = new List<string>
-        {
-            "mp4", "mov"
-        };
-        
-        if (!supportedVideoExtensions.Contains(extension)) 
-            return BadRequest(new List<string>
-            {
-                "Unsupported video file extension"
-            });
-
-        if (! await _repository.ContainsMovieAsync(movieId))
-            return BadRequest(new List<string>
-            {
-                "Movie doesn't exist"
-            });
-        
-        var fileName = $"mov_{movieId}.{extension}";
-        
-        await using (var fs = System.IO.File.Create($"uploads/{fileName}"))
-        {
-            await file.CopyToAsync(fs);   
-        }
-        
         return Ok();
     }
     
-    [HttpGet("watch/{movieId}")]
-    public IActionResult Watch([FromRoute]int movieId)
+    [HttpPost]
+    public async Task<IActionResult> AddMovie([FromBody] CreateMovieDto createMovieDto)
     {
-        var path = $"uploads/mov_{movieId}/playlist.m3u8";
-        var fileInfo = new FileInfo(path);
-        if (!fileInfo.Exists)
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState.GetErrorsList());
+        var createdMovieDto = await _repository.CreateMovieAsync(createMovieDto);
+
+        if (createdMovieDto == null)
             return BadRequest();
 
-        var stream = fileInfo.OpenRead();
-
-        return new FileStreamResult(stream, new MediaTypeHeaderValue(new StringSegment("application/x-mpegURL")));
+        return Ok(createdMovieDto);
     }
-    
-    [HttpGet("watch/{movieId}/{resolution}/{file}")]
-    public IActionResult WatchFile([FromRoute] int movieId, string resolution, string file)
+
+    [HttpPost("upload")]
+    [RequestSizeLimit(1024 * 1024 * 1024)]
+    public async Task<IActionResult> UploadMovie([FromQuery] [Required] int movieId, [Required] IFormFile file)
     {
-        var path = $"uploads/mov_{movieId}/{resolution}/{file}";
-        var fileInfo = new FileInfo(path);
-        if (!fileInfo.Exists)
+        var uploadMovieDto = await _hlsService.UploadMovieAsync(movieId, file, _repository);
+
+        if (!uploadMovieDto.Succeeded)
+            return BadRequest(new List<string> { uploadMovieDto.Error! });
+
+        return Ok();
+    }
+
+    [HttpGet("watch/{movieId}/.m3u8")]
+    public IActionResult Watch([FromRoute] int movieId)
+    {
+        var playlistDto = _hlsService.GetPlaylistByMovieId(movieId);
+
+        if (!playlistDto.Exists)
+            return BadRequest(new List<string?> { playlistDto.Error });
+
+        return new FileStreamResult(playlistDto.Stream!,
+            new MediaTypeHeaderValue(new StringSegment("application/x-mpegURL")));
+    }
+
+    [HttpGet("watch/{movieId}/{quality}/{file}")]
+    public IActionResult WatchFile([FromRoute] int movieId, string quality, string file)
+    {
+        var hlsFileDto = _hlsService.GetHlsFile(movieId, quality, file);
+
+        if (!hlsFileDto.Succeeded)
             return BadRequest();
 
-        var stream = fileInfo.OpenRead();
-
-        var contentType = fileInfo.Extension switch
-        {
-            ".ts" => "video/MP2T",
-            ".m3u8" => "application/x-mpegURL",
-            _ => "error"
-        };
-
-        if (contentType == "error")
-            return BadRequest();
-
-        return new FileStreamResult(stream, new MediaTypeHeaderValue(new StringSegment(contentType)));
+        return new FileStreamResult(hlsFileDto.Stream!,
+            new MediaTypeHeaderValue(new StringSegment(hlsFileDto.ContentType)));
     }
 }
