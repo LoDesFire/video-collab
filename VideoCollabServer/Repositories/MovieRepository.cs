@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using VideoCollabServer.Data;
 using VideoCollabServer.Dtos.Movie;
 using VideoCollabServer.Interfaces;
@@ -60,4 +61,10 @@ public class MovieRepository : IMovieRepository
             Id = movie.Id
         };
     }
+    
+    public async Task<bool> ContainsMovieAsync(int movieId)
+    {
+        return (await Context.Movies.FirstAsync(m => m.Id == movieId)) != null;
+    }
+    
 }
