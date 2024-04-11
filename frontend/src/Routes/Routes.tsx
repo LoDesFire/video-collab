@@ -4,8 +4,13 @@ import App from "../App";
 import HomePage from "../Pages/HomePage/HomePage";
 import LoginPage from "../Pages/LoginPage/LoginPage";
 import RegisterPage from "../Pages/RegisterPage/RegisterPage";
-import {AuthRequiredProtectRoute, NotAuthRequiredProtectRoute} from "./AuthRequiredProtectRoute";
+import {AuthRequiredProtectRoute, /*NotAuthRequiredProtectRoute*/} from "./AuthRequiredProtectRoute";
 import ProfilePage from "../Pages/ProfilePage/ProfilePage";
+import ConnectToRoomPage from "../Pages/ConnectToRoomPage/ConnectToRoomPage";
+import CreateRoomPage from "../Pages/CreateRoomPage/CreateRoomPage";
+import {VideoTestPage} from "../Pages/VideoTest/VideoTest";
+import UploadVideoTest from "../Pages/UploadVideoTest/UploadVideoTest";
+import {UploadVideoPage} from "../Pages/UploadVideo/UploadVideoPage";
 
 export const router = createBrowserRouter([
         {
@@ -14,24 +19,21 @@ export const router = createBrowserRouter([
             children: [
                 {
                     path: "",
-                    element:
-                        <AuthRequiredProtectRoute>
-                            <HomePage/>
-                        </AuthRequiredProtectRoute>
+                    element: <HomePage/>
                 },
                 {
                     path: "login",
                     element:
-                        <NotAuthRequiredProtectRoute>
+                        /*<NotAuthRequiredProtectRoute>*/
                             <LoginPage/>
-                        </NotAuthRequiredProtectRoute>
+                        /*</NotAuthRequiredProtectRoute>*/
                 },
                 {
                     path: "register",
                     element:
-                        <NotAuthRequiredProtectRoute>
+                        /*<NotAuthRequiredProtectRoute>*/
                             <RegisterPage/>
-                        </NotAuthRequiredProtectRoute>
+                       /* </NotAuthRequiredProtectRoute>*/
                 },
                 {
                     path: "profile",
@@ -39,6 +41,35 @@ export const router = createBrowserRouter([
                         <AuthRequiredProtectRoute>
                             <ProfilePage/>
                         </AuthRequiredProtectRoute>
+                },
+                {
+                    path: "connect",
+                    element:
+                        <AuthRequiredProtectRoute>
+                            <ConnectToRoomPage/>
+                        </AuthRequiredProtectRoute>
+                },
+                {
+                    path: "create",
+                    element:
+                        <AuthRequiredProtectRoute>
+                            <CreateRoomPage/>
+                        </AuthRequiredProtectRoute>
+                },
+                {
+                    path: "upload",
+                    element:
+                        <AuthRequiredProtectRoute>
+                            <UploadVideoPage/>
+                        </AuthRequiredProtectRoute>
+                },
+                {
+                    path: "test/view",
+                    element: <VideoTestPage/>
+                },
+                {
+                    path: "test/upload",
+                    element: <UploadVideoTest/>
                 }
             ]
         }

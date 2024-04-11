@@ -1,4 +1,4 @@
-import {UserProfile} from "../Models/User";
+import {UserProfileId} from "../Models/User";
 import React, {createContext, useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {loginAPI, registerAPI} from "../Services/AuthService";
@@ -6,7 +6,7 @@ import {toast} from "react-toastify";
 import axios from "axios";
 
 type UserContextType = {
-    user: UserProfile | null;
+    user: UserProfileId | null;
     token: string | null;
     loginUser: (username: string, password: string) => void;
     registerUser: (username: string, password: string) => void;
@@ -21,7 +21,7 @@ const UserContext = createContext<UserContextType>({} as UserContextType);
 export const UserProvider = ({children}: Props) => {
     const navigate = useNavigate();
     const [token, setToken] = useState<string | null>(null);
-    const [user, setUser] = useState<UserProfile | null>(null);
+    const [user, setUser] = useState<UserProfileId | null>(null);
     const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
@@ -30,7 +30,7 @@ export const UserProvider = ({children}: Props) => {
         if (user && token) {
             setUser(JSON.parse(user));
             setToken(token);
-              axios.defaults.headers.common["Authorization"] = token;
+            axios.defaults.headers.common.Authorization = "Bearer " + token;
         }
         setIsReady(true);
     }, []);
@@ -39,46 +39,43 @@ export const UserProvider = ({children}: Props) => {
         username: string,
         password: string
     ) => {
-        const userObj: UserProfile = {
-            username: "Test",
-        }
-        localStorage.setItem("user", JSON.stringify(userObj))
-        setUser(userObj)
-        localStorage.setItem("token", "token")
-        setToken("token")
         await loginAPI(username, password)
-            .then((res) => {
-                if (res) {
-                    localStorage.setItem("token", res?.data.token)
-                    const userObj: UserProfile = {
-                        username: res?.data.username,
+                .then((res) => {
+                    if (res) {
+                        localStorage.setItem("token", res?.data.token)
+                        const userObj: UserProfileId = {
+                            id: res?.data.id,
+                            username: res?.data.username,
+                        }
+                        localStorage.setItem("user", JSON.stringify(userObj));
+                        setToken(res?.data.token)
+                        axios.defaults.headers.common.Authorization = "Bearer " + res?.data.token;
+                        navigate("/profile")
+                        setUser(userObj!)
                     }
-                    localStorage.setItem("user", JSON.stringify(userObj));
-                    setToken(res?.data.username)
-                    setUser(userObj!)
-                    navigate("/profile");
-                }
-            }).catch((e) => toast.error("Ошибка сервера"));
-    }
+                }).catch(() => toast.error("Ошибка сервера"));
+        }
 
 
-    const registerUser = async (
-        username: string,
-        password: string
-    ) => {
+        const registerUser = async (
+            username: string,
+            password: string
+        ) => {
         await registerAPI(username, password)
             .then((res) => {
                 if (res) {
-                    localStorage.setItem("token", res?.data.username)
-                    const userObj: UserProfile = {
+                    localStorage.setItem("token", res?.data.token)
+                    const userObj: UserProfileId = {
+                        id: res?.data.id,
                         username: res?.data.username,
                     }
                     localStorage.setItem("user", JSON.stringify(userObj));
-                    setToken(res?.data.username)
+                    setToken(username)
+                    axios.defaults.headers.common.Authorization = "Bearer " + res?.data.token;
                     setUser(userObj!)
-                    navigate("/profile");
+                    navigate("/profile")
                 }
-            }).catch((e) => toast.error("Ошибка сервера"));
+            }).catch(() => toast.error("Ошибка сервера"));
     }
 
     const isLoggedIn = () => {
@@ -86,6 +83,7 @@ export const UserProvider = ({children}: Props) => {
     }
 
     const logout = () => {
+        axios.defaults.headers.common.Authorization = null;
         localStorage.removeItem("token")
         localStorage.removeItem("user")
         setUser(null);

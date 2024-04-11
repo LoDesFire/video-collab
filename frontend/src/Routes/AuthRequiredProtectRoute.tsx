@@ -14,12 +14,12 @@ export const AuthRequiredProtectRoute = ({children}: Props) => {
     )
 }
 
-export const NotAuthRequiredProtectRoute = ({children}: Props) => {
-    const location = useLocation();
-    const {isLoggedIn} = useAuth()
-    return isLoggedIn() ? (
-        <Navigate to="/profile" state={{from: location}} replace/>
-    ) : (
-        <>{children}</>
-    )
-}
+// export const NotAuthRequiredProtectRoute = ({children}: Props) => {
+//     const location = useLocation();
+//     const {isLoggedIn} = useAuth()
+//     return isLoggedIn() ? (
+//         <Navigate to="/profile" state={{from: location}} replace/>
+//     ) : (
+//         <>{children}</>
+//     )
+// }
