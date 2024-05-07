@@ -9,7 +9,6 @@ import ProfilePage from "../Pages/ProfilePage/ProfilePage";
 import ConnectToRoomPage from "../Pages/ConnectToRoomPage/ConnectToRoomPage";
 import CreateRoomPage from "../Pages/CreateRoomPage/CreateRoomPage";
 import {VideoTestPage} from "../Pages/VideoTest/VideoTest";
-import UploadVideoTest from "../Pages/UploadVideoTest/UploadVideoTest";
 import {UploadVideoPage} from "../Pages/UploadVideo/UploadVideoPage";
 
 export const router = createBrowserRouter([
@@ -64,12 +63,8 @@ export const router = createBrowserRouter([
                         </AuthRequiredProtectRoute>
                 },
                 {
-                    path: "test/view",
+                    path: "test/view/:id",
                     element: <VideoTestPage/>
-                },
-                {
-                    path: "test/upload",
-                    element: <UploadVideoTest/>
                 }
             ]
         }

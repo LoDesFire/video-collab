@@ -43,7 +43,7 @@ export const UploadVideoPage = () => {
         formState: {errors}
     } = useForm<CreateMovieForm>({resolver: yupResolver(validation)})
 
-    const sendFilmDataToServer = (form: CreateMovieForm) => {
+    const sendMovieDataToServer = (form: CreateMovieForm) => {
         if (movieId < 0) {
             movieAddNew(form.name, form.description, form.trailerUrl, form.posterUrl)
                 .then(r => {
@@ -107,7 +107,7 @@ export const UploadVideoPage = () => {
                 </h1>
                 <form
                     className="space-y-3"
-                    onSubmit={handleSubmit(sendFilmDataToServer)}>
+                    onSubmit={handleSubmit(sendMovieDataToServer)}>
                     <div>
                         <label className={labelStyle}>
                             Название фильма
