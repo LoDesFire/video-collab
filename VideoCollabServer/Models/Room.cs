@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace VideoCollabServer.Models;
 
 public class Room
@@ -11,3 +9,4 @@ public class Room
     public List<Stream> Streams { get; set; } = new();
     public List<Movie> Playlist { get; set; } = new();
 }
+

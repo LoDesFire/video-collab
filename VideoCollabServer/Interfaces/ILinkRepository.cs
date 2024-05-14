@@ -1,8 +1,9 @@
+using VideoCollabServer.Dtos;
 using VideoCollabServer.Models;
 
 namespace VideoCollabServer.Interfaces;
 
 public interface ILinkRepository
 {
-    Task<Link?> CreateLinkAsync(Link link);
+    Task<Result<Link>> CreateLinkAsync(Link link);
 }

@@ -20,7 +20,7 @@ public sealed class ApplicationContext : IdentityDbContext<User>
     {
         Database.Migrate();
     }
-    
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -30,5 +30,9 @@ public sealed class ApplicationContext : IdentityDbContext<User>
             .UsingEntity(j => j.ToTable("RoomUsers"))
             .HasMany(u => u.OwnedRooms)
             .WithOne(r => r.Owner);
+
+        modelBuilder.Entity<Movie>()
+            .Property(m => m.Status)
+            .HasConversion<string>();
     }
 }

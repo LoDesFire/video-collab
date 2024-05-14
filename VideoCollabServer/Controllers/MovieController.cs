@@ -4,6 +4,7 @@ using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using VideoCollabServer.Dtos.Movie;
 using VideoCollabServer.Interfaces;
+using VideoCollabServer.Models;
 using VideoCollabServer.Utils;
 
 namespace VideoCollabServer.Controllers;
@@ -14,11 +15,13 @@ public class MovieController : ControllerBase
 {
     private readonly IMovieRepository _repository;
     private readonly IHlsService _hlsService;
+    private readonly ITranscodingMovieRepository _transcodingMovieRepository;
 
-    public MovieController(IMovieRepository repository, IHlsService hlsService)
+    public MovieController(IMovieRepository repository, IHlsService hlsService, ITranscodingMovieRepository transcodingMovieRepository)
     {
         _repository = repository;
         _hlsService = hlsService;
+        _transcodingMovieRepository = transcodingMovieRepository;
     }
     
     [HttpDelete]
@@ -35,47 +38,48 @@ public class MovieController : ControllerBase
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState.GetErrorsList());
-        var createdMovieDto = await _repository.CreateMovieAsync(createMovieDto);
+        var createdMovie = await _repository.CreateMovieAsync(createMovieDto);
 
-        if (createdMovieDto == null)
+        if (!createdMovie.Succeeded)
             return BadRequest();
 
-        return Ok(createdMovieDto);
+        return Ok(createdMovie.Value);
     }
 
     [HttpPost("upload")]
     [RequestSizeLimit(1024 * 1024 * 1024)]
     public async Task<IActionResult> UploadMovie([FromQuery] [Required] int movieId, [Required] IFormFile file)
     {
-        var uploadMovieDto = await _hlsService.UploadMovieAsync(movieId, file, _repository);
+        var upload = await _hlsService.UploadMovieAsync(movieId, file, _repository);
 
-        if (!uploadMovieDto.Succeeded)
-            return BadRequest(new List<string> { uploadMovieDto.Error! });
+        if (!upload.Succeeded)
+            return BadRequest(upload.Errors);
 
+        await _transcodingMovieRepository.ChangeMovieStatusAsync(movieId, Movie.Statuses.InQueue);
         return Ok();
     }
 
-    [HttpGet("watch/{movieId}/.m3u8")]
+    [HttpGet("watch/{movieId:int}/.m3u8")]
     public IActionResult Watch([FromRoute] int movieId)
     {
-        var playlistDto = _hlsService.GetPlaylistByMovieId(movieId);
+        var playlist = _hlsService.GetPlaylistByMovieId(movieId);
 
-        if (!playlistDto.Exists)
-            return BadRequest(new List<string?> { playlistDto.Error });
+        if (!playlist.Succeeded)
+            return BadRequest(playlist.Errors);
 
-        return new FileStreamResult(playlistDto.Stream!,
+        return new FileStreamResult(playlist.Value!,
             new MediaTypeHeaderValue(new StringSegment("application/x-mpegURL")));
     }
 
-    [HttpGet("watch/{movieId}/{quality}/{file}")]
+    [HttpGet("watch/{movieId:int}/{quality}/{file}")]
     public IActionResult WatchFile([FromRoute] int movieId, string quality, string file)
     {
-        var hlsFileDto = _hlsService.GetHlsFile(movieId, quality, file);
+        var hlsFile = _hlsService.GetHlsFile(movieId, quality, file);
 
-        if (!hlsFileDto.Succeeded)
+        if (!hlsFile.Succeeded)
             return BadRequest();
 
-        return new FileStreamResult(hlsFileDto.Stream!,
-            new MediaTypeHeaderValue(new StringSegment(hlsFileDto.ContentType)));
+        return new FileStreamResult(hlsFile.Value!.Stream,
+            new MediaTypeHeaderValue(new StringSegment(hlsFile.Value!.ContentType)));
     }
 }

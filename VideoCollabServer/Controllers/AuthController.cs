@@ -24,7 +24,7 @@ public class AuthController : ControllerBase
 
         var authResult = await _repository.LoginAsync(authUserDto);
 
-        return authResult.Succeeded ? Ok(authResult.AuthedUserDto) : StatusCode(401, authResult.Errors);
+        return authResult.Succeeded ? Ok(authResult.Value) : StatusCode(401, authResult.Errors);
     }
 
     [HttpPost("register")]
@@ -35,6 +35,6 @@ public class AuthController : ControllerBase
 
         var authResult = await _repository.CreateAsync(authUserDto);
 
-        return authResult.Succeeded ? Ok(authResult.AuthedUserDto) : StatusCode(401, authResult.Errors);
+        return authResult.Succeeded ? Ok(authResult.Value) : StatusCode(401, authResult.Errors);
     }
 }

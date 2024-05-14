@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
+using VideoCollabServer.Dtos;
 using VideoCollabServer.Dtos.User;
 using VideoCollabServer.Interfaces;
 using VideoCollabServer.Models;
@@ -17,12 +18,12 @@ public class AuthService : IAuthService
         _tokenService = tokenService;
     }
 
-    public async Task<AuthResult> LoginAsync(AuthUserDto authUserDto)
+    public async Task<Result<AuthedUserDto>> LoginAsync(AuthUserDto authUserDto)
     {
         var user = await _userManager.FindByNameAsync(authUserDto.Username);
         if (user == null)
         {
-            return new AuthResult
+            return new Result<AuthedUserDto>
             {
                 Errors = new List<string> { "Invalid username or password" }
             };
@@ -32,10 +33,10 @@ public class AuthService : IAuthService
         var isValidPassword = await _userManager.CheckPasswordAsync(user, authUserDto.Password);
         if (isValidPassword)
         {
-            return new AuthResult
+            return new Result<AuthedUserDto>
             {
                 Succeeded = true,
-                AuthedUserDto = new AuthedUserDto
+                Value = new AuthedUserDto
                 {
                     Id = userId, 
                     Token = _tokenService.GenerateToken(userId),
@@ -44,13 +45,13 @@ public class AuthService : IAuthService
             };
         }
 
-        return new AuthResult
+        return new Result<AuthedUserDto>
         {
             Errors = new List<string> { "Invalid username or password" }
         };
     }
 
-    public async Task<AuthResult> RegisterAsync(AuthUserDto authUserDto)
+    public async Task<Result<AuthedUserDto>> RegisterAsync(AuthUserDto authUserDto)
     {
         var user = new User { UserName = authUserDto.Username };
         var result = await _userManager.CreateAsync(user, authUserDto.Password);
@@ -59,10 +60,10 @@ public class AuthService : IAuthService
         
         if (result.Succeeded)
         {
-            return new AuthResult
+            return new Result<AuthedUserDto>
             {
                 Succeeded = true,
-                AuthedUserDto = new AuthedUserDto
+                Value = new AuthedUserDto
                 {
                     Id = userId, 
                     Token = _tokenService.GenerateToken(userId),
@@ -71,7 +72,7 @@ public class AuthService : IAuthService
             };
         }
 
-        return new AuthResult
+        return new Result<AuthedUserDto>
         {
             Errors = result.Errors.Select(x => x.Description)
         };

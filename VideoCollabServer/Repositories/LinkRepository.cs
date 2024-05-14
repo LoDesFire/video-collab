@@ -1,23 +1,37 @@
 using VideoCollabServer.Data;
+using VideoCollabServer.Dtos;
 using VideoCollabServer.Interfaces;
 using VideoCollabServer.Models;
 
 namespace VideoCollabServer.Repositories;
 
-public class LinkRepository: ILinkRepository
+public class LinkRepository(ApplicationContext context) : ILinkRepository
 {
-    private ApplicationContext Context { get; set; }
-    
-    public LinkRepository(ApplicationContext context)
+    private ApplicationContext Context { get; } = context;
+
+    public async Task<Result<Link>> CreateLinkAsync(Link link)
     {
-        Context = context;
-    }
-    
-    public async Task<Link?> CreateLinkAsync(Link link)
-    {
-        await Context.Links.AddAsync(link);
-        await Context.SaveChangesAsync();
-        
-        return link;
+        try
+        {
+            await Context.Links.AddAsync(link);
+            await Context.SaveChangesAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            return new Result<Link>
+            {
+                Succeeded = false,
+                Errors = new List<string>
+                {
+                    "Operation cancelled"
+                }
+            };
+        }
+
+        return new Result<Link>
+        {
+            Succeeded = true,
+            Value = link,
+        };
     }
 }

@@ -19,6 +19,7 @@ rate_monitor_buffer_ratio=1.5   # maximum buffer size between bitrate conformanc
 
 source="${1}"
 target="${2}"
+ffmpeg="${3}"
 if [[ ! "${target}" ]]; then
   target="${source##*/}" # leave only last component of path
   target="${target%.*}"  # strip extension
@@ -67,12 +68,10 @@ for rendition in "${renditions[@]}"; do
   bufsize="$(echo "`echo ${bitrate} | grep -oE '[[:digit:]]+'`*${rate_monitor_buffer_ratio}" | bc)"
 #  bandwidth="$(echo ${bitrate} | grep -oE '[[:digit:]]+')000"
   
-  cmd+=" -filter:v:${index} scale=w=${width}:h=${height}:force_original_aspect_ratio=decrease"
+  cmd+=" -filter:v:${index} scale=w=${width}:h=${height}:force_original_aspect_ratio=decrease:force_divisible_by=2"
   cmd+=" -b:v:${index} ${bitrate} -maxrate:v:${index} ${maxrate%.*}k -bufsize:v:${index} ${bufsize%.*}k -b:a:${index} ${audiorate}"
-
-
-  ((index++))
+  ((index=index+1))
 done
 precmd+=${precmd_static}
 
-/opt/homebrew/bin/ffmpeg ${misc_params} -i ${source} ${precmd} ${cmd} -var_stream_map "${stream_map}" ${postcmd}
+${ffmpeg} ${misc_params} -i ${source} ${precmd} ${cmd} -var_stream_map "${stream_map}" ${postcmd}

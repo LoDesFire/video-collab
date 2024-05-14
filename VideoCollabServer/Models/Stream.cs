@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace VideoCollabServer.Models;
 
 public class Stream

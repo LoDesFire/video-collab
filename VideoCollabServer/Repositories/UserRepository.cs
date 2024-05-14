@@ -1,22 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using VideoCollabServer.Data;
+using VideoCollabServer.Dtos;
 using VideoCollabServer.Dtos.User;
 using VideoCollabServer.Interfaces;
 using VideoCollabServer.Mappers;
-using VideoCollabServer.Models;
 
 namespace VideoCollabServer.Repositories;
 
-public class UserRepository : IUserRepository
+public class UserRepository(ApplicationContext context, IAuthService authService) : IUserRepository
 {
-    private ApplicationContext Context { get; set; }
-    private IAuthService AuthService { get; set; }
-
-    public UserRepository(ApplicationContext context, IAuthService authService)
-    {
-        Context = context;
-        AuthService = authService;
-    }
+    private ApplicationContext Context { get; } = context;
+    private IAuthService AuthService { get; } = authService;
 
     public async Task<UserProfileDto?> GetByIdAsync(string id)
     {
@@ -52,25 +46,26 @@ public class UserRepository : IUserRepository
     public async Task<bool> UnpinMovieAsync(string id, int movieId)
     {
         var user = await Context.Users
-            .Include(u => u.PinnedMovies)
-            .FirstAsync(u => u.Id == id);
-        var movie = await Context.Movies.FindAsync(movieId);
+            .FirstOrDefaultAsync(u => u.Id == id);
         
-        if (movie == null || !movie.UsersPinnedMovie.Contains(user))
+        var movie = await Context.Movies
+            .Include(m => m.UsersPinnedMovie)
+            .FirstOrDefaultAsync(m => m.Id == movieId);
+        
+        if (movie == null || user == null || !movie.UsersPinnedMovie.Contains(user))
             return false;
         
         movie.UsersPinnedMovie.Remove(user);
-        
         await Context.SaveChangesAsync();
         return true;
     }
 
-    public async Task<AuthResult> CreateAsync(AuthUserDto authUserDto)
+    public async Task<Result<AuthedUserDto>> CreateAsync(AuthUserDto authUserDto)
     {
         return await AuthService.RegisterAsync(authUserDto);
     }
 
-    public async Task<AuthResult> LoginAsync(AuthUserDto authUserDto)
+    public async Task<Result<AuthedUserDto>> LoginAsync(AuthUserDto authUserDto)
     {
         return await AuthService.LoginAsync(authUserDto);
     }

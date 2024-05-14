@@ -5,15 +5,10 @@ using File = VideoCollabServer.Models.File;
 
 namespace VideoCollabServer.Repositories;
 
-public class FileRepository: IFileRepository
+public class FileRepository(ApplicationContext context) : IFileRepository
 {
-    private ApplicationContext Context { get; set; }
-    
-    public FileRepository(ApplicationContext context)
-    {
-        Context = context;
-    }
-    
+    private ApplicationContext Context { get; } = context;
+
     public async Task<int?> CreateFileAsync(File file)
     {
         var film = await Context.Files.AddAsync(file);
