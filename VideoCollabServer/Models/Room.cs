@@ -1,12 +1,18 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace VideoCollabServer.Models;
 
 public class Room
 {
-    public int Id { get; set; }
+    [MaxLength(256)]
+    [Key]
+    public string Id { get; set; } = null!;
+    public bool Private { get; set; }
     public User Owner { get; set; } = null!;
-    public Link InviteLink { get; set; } = null!;
-    public List<User> Users { get; set; } = new();
-    public List<Stream> Streams { get; set; } = new();
-    public List<Movie> Playlist { get; set; } = new();
+    public User VideoOperator { get; set; } = null!;
+    [MaxLength(256)]
+    public string TextRoomSecret { get; set; } = null!;
+    public List<User> JoinedUsers { get; init; } = [];
+    public List<Movie> Playlist { get; init; } = [];
 }
 

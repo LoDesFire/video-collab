@@ -11,7 +11,7 @@ public static class RoomMappers
         return new RoomProfileDto
         {
             Id = roomModel.Id,
-            UsersCount = roomModel.Users.Count,
+            UsersCount = roomModel.JoinedUsers.Count,
             Movie = roomModel.Playlist.First().ToProfileRoomDto(),
         };
     }

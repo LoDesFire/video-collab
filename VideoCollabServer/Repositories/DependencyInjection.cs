@@ -11,6 +11,7 @@ public static class DependencyInjection
             .AddScoped<ILinkRepository, LinkRepository>()
             .AddScoped<IMovieRepository, MovieRepository>()
             .AddScoped<IUserRepository, UserRepository>()
+            .AddScoped<IRoomRepository, RoomRepository>()
             .AddSingleton<ITranscodingMovieRepository, TranscodingMovieRepository>();
     }
 }

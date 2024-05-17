@@ -11,24 +11,17 @@ namespace VideoCollabServer.Controllers;
 
 [Route("api/movie")]
 [ApiController]
-public class MovieController : ControllerBase
+public class MovieController(
+    IMovieRepository repository,
+    IHlsService hlsService,
+    ITranscodingMovieRepository transcodingMovieRepository)
+    : ControllerBase // TODO: Movie Status handler
 {
-    private readonly IMovieRepository _repository;
-    private readonly IHlsService _hlsService;
-    private readonly ITranscodingMovieRepository _transcodingMovieRepository;
-
-    public MovieController(IMovieRepository repository, IHlsService hlsService, ITranscodingMovieRepository transcodingMovieRepository)
-    {
-        _repository = repository;
-        _hlsService = hlsService;
-        _transcodingMovieRepository = transcodingMovieRepository;
-    }
-    
     [HttpDelete]
     public async Task<IActionResult> DeleteMovie([FromQuery][Required] int movieId)
     {
-        await _repository.DeleteMovieAsync(movieId);
-        _hlsService.DeleteMovie(movieId);
+        await repository.DeleteMovieAsync(movieId);
+        hlsService.DeleteMovie(movieId);
 
         return Ok();
     }
@@ -38,7 +31,7 @@ public class MovieController : ControllerBase
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState.GetErrorsList());
-        var createdMovie = await _repository.CreateMovieAsync(createMovieDto);
+        var createdMovie = await repository.CreateMovieAsync(createMovieDto);
 
         if (!createdMovie.Succeeded)
             return BadRequest();
@@ -50,19 +43,19 @@ public class MovieController : ControllerBase
     [RequestSizeLimit(1024 * 1024 * 1024)]
     public async Task<IActionResult> UploadMovie([FromQuery] [Required] int movieId, [Required] IFormFile file)
     {
-        var upload = await _hlsService.UploadMovieAsync(movieId, file, _repository);
+        var upload = await hlsService.UploadMovieAsync(movieId, file, repository);
 
         if (!upload.Succeeded)
             return BadRequest(upload.Errors);
 
-        await _transcodingMovieRepository.ChangeMovieStatusAsync(movieId, Movie.Statuses.InQueue);
+        await transcodingMovieRepository.ChangeMovieStatusAsync(movieId, Movie.Statuses.InQueue);
         return Ok();
     }
 
     [HttpGet("watch/{movieId:int}/.m3u8")]
     public IActionResult Watch([FromRoute] int movieId)
     {
-        var playlist = _hlsService.GetPlaylistByMovieId(movieId);
+        var playlist = hlsService.GetPlaylistByMovieId(movieId);
 
         if (!playlist.Succeeded)
             return BadRequest(playlist.Errors);
@@ -74,7 +67,7 @@ public class MovieController : ControllerBase
     [HttpGet("watch/{movieId:int}/{quality}/{file}")]
     public IActionResult WatchFile([FromRoute] int movieId, string quality, string file)
     {
-        var hlsFile = _hlsService.GetHlsFile(movieId, quality, file);
+        var hlsFile = hlsService.GetHlsFile(movieId, quality, file);
 
         if (!hlsFile.Succeeded)
             return BadRequest();

@@ -2,7 +2,6 @@ using VideoCollabServer.Models;
 
 namespace VideoCollabServer.Dtos.Movie;
 
-using File = VideoCollabServer.Models.File;
 
 public class PinnedMovieDto
 {

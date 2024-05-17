@@ -9,6 +9,8 @@ public static class DependencyInjection
         return services
             .AddScoped<IAuthService, AuthService>()
             .AddScoped<ITokenService, TokenService>()
+            .AddScoped<IJanusService, JanusService>()
+            .AddScoped<IJanusTextroomService, JanusTextroomService>()
             .AddSingleton<IHlsService, HlsService>();
     }
 }

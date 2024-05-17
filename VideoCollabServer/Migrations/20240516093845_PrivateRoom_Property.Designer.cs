@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VideoCollabServer.Data;
 
@@ -10,9 +11,11 @@ using VideoCollabServer.Data;
 namespace VideoCollabServer.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20240516093845_PrivateRoom_Property")]
+    partial class PrivateRoom_Property
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.3");
@@ -150,8 +153,8 @@ namespace VideoCollabServer.Migrations
                     b.Property<int>("PlaylistId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("RoomsId")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("RoomsId")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("PlaylistId", "RoomsId");
 
@@ -177,8 +180,8 @@ namespace VideoCollabServer.Migrations
 
             modelBuilder.Entity("RoomUser", b =>
                 {
-                    b.Property<string>("ConnectedRoomsId")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("ConnectedRoomsId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("JoinedUsersId")
                         .HasColumnType("TEXT");
@@ -262,9 +265,9 @@ namespace VideoCollabServer.Migrations
 
             modelBuilder.Entity("VideoCollabServer.Models.Room", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("OwnerId")
                         .HasColumnType("TEXT");
@@ -272,7 +275,7 @@ namespace VideoCollabServer.Migrations
                     b.Property<bool>("Private")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("TextRoomSecret")
+                    b.Property<string>("TextRoomToken")
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
