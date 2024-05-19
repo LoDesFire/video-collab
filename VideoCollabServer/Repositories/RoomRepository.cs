@@ -87,7 +87,7 @@ public class RoomRepository(ApplicationContext context, IJanusTextroomService ja
 
         user.ConnectedRooms.Remove(room);
 
-        await janusTextroomService.DisallowToken(user.GetRoomToken(), roomId, room.TextRoomSecret);
+        // await janusTextroomService.DisallowToken(user.GetRoomToken(), roomId, room.TextRoomSecret);
 
         await context.SaveChangesAsync();
     }

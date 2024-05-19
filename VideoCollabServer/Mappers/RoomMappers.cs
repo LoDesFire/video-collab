@@ -12,7 +12,7 @@ public static class RoomMappers
         {
             Id = roomModel.Id,
             UsersCount = roomModel.JoinedUsers.Count,
-            Movie = roomModel.Playlist.First().ToProfileRoomDto(),
+            Movie = roomModel.Playlist.FirstOrDefault()?.ToProfileRoomDto(),
         };
     }
 }
