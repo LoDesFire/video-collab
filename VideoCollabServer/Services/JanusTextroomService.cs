@@ -38,12 +38,13 @@ public class JanusTextroomService(IJanusService janusService) : IJanusTextroomSe
         return Result.Ok();
     }
 
-    public async Task<Result> CreateRoom(string roomId, string secret, bool @private)
+    public async Task<Result> CreateRoom(string userId, string roomId, string secret, bool @private)
     {
         var res = await HandlePluginResponse(new JanusCreateTextroomDtoDto
         {
             AdminKey = janusService.PluginSecrets[PluginName],
             Request = "create",
+            OwnerId = userId,
             Secret = secret,
             Room = roomId,
             Private = @private

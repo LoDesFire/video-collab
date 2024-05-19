@@ -15,7 +15,7 @@ public class RoomRepository(ApplicationContext context, IJanusTextroomService ja
         var roomId = Guid.NewGuid().ToString();
         var secret = Guid.NewGuid().ToString();
 
-        var roomResult = await janusTextroomService.CreateRoom(roomId, secret, true);
+        var roomResult = await janusTextroomService.CreateRoom(userId, roomId, secret, true);
         if (!roomResult.Succeeded)
             return Result<CreatedRoomDto>.Error(roomResult.Errors.Append("Failed to create a room"));
 
