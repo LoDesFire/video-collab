@@ -10,7 +10,9 @@ public interface IRoomRepository
 
     public Task<Result<JoinedUserDto>> JoinTheRoomAsync(string userId, string roomId);
     
-    public Task LeaveFromRoom(int roomId);
+    public Task<Result> DeleteRoomAsync(string userId, string roomId);
+    
+    public Task LeaveFromRoom(string userId, string roomId);
 
     public Task<Result> ChangeVideoOperator(string userId);
 }

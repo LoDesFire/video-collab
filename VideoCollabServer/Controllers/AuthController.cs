@@ -7,22 +7,15 @@ namespace VideoCollabServer.Controllers;
 
 [Route("api")]
 [ApiController]
-public class AuthController : ControllerBase
+public class AuthController(IUserRepository repository) : ControllerBase
 {
-    private readonly IUserRepository _repository;
-    
-    public AuthController(IUserRepository repository)
-    {
-        _repository = repository;
-    }
-    
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] AuthUserDto authUserDto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState.GetErrorsList());
 
-        var authResult = await _repository.LoginAsync(authUserDto);
+        var authResult = await repository.LoginAsync(authUserDto);
 
         return authResult.Succeeded ? Ok(authResult.Value) : StatusCode(401, authResult.Errors);
     }
@@ -33,7 +26,7 @@ public class AuthController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState.GetErrorsList());
 
-        var authResult = await _repository.CreateAsync(authUserDto);
+        var authResult = await repository.CreateAsync(authUserDto);
 
         return authResult.Succeeded ? Ok(authResult.Value) : StatusCode(401, authResult.Errors);
     }

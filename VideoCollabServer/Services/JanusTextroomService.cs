@@ -9,21 +9,16 @@ public class JanusTextroomService(IJanusService janusService) : IJanusTextroomSe
 
     private string? _endpoint;
 
-    private async Task<Result> ActivateAcl(string roomId)
+    private async Task<Result> HandlePluginResponse(object message)
     {
         if (_endpoint == null)
-            return Result.Error("Obtain UrlPostfix first");
+        {
+            var connectionRes = await ConnectToPlugin();
+            if (!connectionRes.Succeeded)
+                return Result.Error(connectionRes.Errors);
+        }
 
-        var res = await janusService.SendMessage(_endpoint,
-            new JanusAclDto
-            {
-                Textroom = "allowed",
-                Action = "enable",
-                Room = roomId,
-                Secret = janusService.PluginSecrets[PluginName]
-            }
-        );
-
+        var res = await janusService.SendMessage(_endpoint!, message);
         if (!res.Succeeded)
             return Result.Error("Internal Server Error");
 
@@ -32,33 +27,8 @@ public class JanusTextroomService(IJanusService janusService) : IJanusTextroomSe
             ? Result.Error(pluginData.GetProperty("error").ToString())
             : Result.Ok();
     }
-
-    public async Task<Result> AllowToken(string token, string roomId)
-    {
-        if (_endpoint == null)
-            return Result.Error("Obtain UrlPostfix first");
-
-        var res = await janusService.SendMessage(_endpoint,
-            new JanusAclDto
-            {
-                Textroom = "allowed",
-                Action = "add",
-                Room = roomId,
-                Secret = janusService.PluginSecrets[PluginName],
-                Allowed = [token]
-            }
-        );
-
-        if (!res.Succeeded)
-            return Result.Error("Internal Server Error");
-
-        var pluginData = res.Value.GetProperty("data");
-        return pluginData.GetProperty("textroom").ToString() == "error"
-            ? Result.Error(pluginData.GetProperty("error").ToString())
-            : Result.Ok();
-    }
-
-    public async Task<Result> ConnectToPlugin()
+    
+    private async Task<Result> ConnectToPlugin()
     {
         var res = await janusService.GetUrlPostfix(PluginName);
         if (!res.Succeeded)
@@ -70,10 +40,7 @@ public class JanusTextroomService(IJanusService janusService) : IJanusTextroomSe
 
     public async Task<Result> CreateRoom(string roomId, string secret, bool @private)
     {
-        if (_endpoint == null)
-            return Result.Error("Obtain UrlPostfix first");
-
-        var res = await janusService.SendMessage(_endpoint, new JanusCreateTextroomDto
+        var res = await HandlePluginResponse(new JanusCreateTextroomDtoDto
         {
             AdminKey = janusService.PluginSecrets[PluginName],
             Request = "create",
@@ -81,13 +48,58 @@ public class JanusTextroomService(IJanusService janusService) : IJanusTextroomSe
             Room = roomId,
             Private = @private
         });
-
         if (!res.Succeeded)
             return Result.Error(res.Errors);
-        var pluginData = res.Value.GetProperty("data");
-        if (pluginData.GetProperty("textroom").ToString() == "error")
-            return Result.Error(pluginData.GetProperty("error").ToString());
 
-        return await ActivateAcl(roomId);
+        return await ActivateAcl(roomId, secret);
+    }
+    
+    private async Task<Result> ActivateAcl(string roomId, string secret)
+    {
+        return await HandlePluginResponse(
+            new JanusAclDto
+            {
+                Request = "allowed",
+                Action = "enable",
+                Room = roomId,
+                Secret = secret
+            }
+        );
+    }
+
+    private async Task<Result> AllowedRequest(string action, string token, string roomId, string secret)
+    {
+        return await HandlePluginResponse(
+            new JanusAclDto
+            {
+                Request = "allowed",
+                Action = action,
+                Room = roomId,
+                Secret = secret,
+                Allowed = [token]
+            }
+        );
+    }
+
+    public async Task<Result> AllowToken(string token, string roomId, string secret)
+    {
+        return await AllowedRequest("add", token, roomId, secret);
+    }
+
+    public async Task<Result> DisallowToken(string token, string roomId, string secret)
+    {
+        return await AllowedRequest("remove", token, roomId, secret);
+    }
+
+    public async Task<Result> DestroyRoom(string roomId, string secret)
+    {
+        return await HandlePluginResponse(
+            new JanusTextroomDto
+            {
+                Request = "destroy",
+                Room = roomId,
+                Secret = secret
+            }
+        );
     }
 }
