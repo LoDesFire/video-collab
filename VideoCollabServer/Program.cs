@@ -44,8 +44,7 @@ builder.Services
     });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<ApplicationContext>(options => options.UseSqlite(connectionString),
-    ServiceLifetime.Singleton);
+builder.Services.AddDbContext<ApplicationContext>(options => options.UseSqlite(connectionString));
 
 builder.Services
     .AddIdentity<User, IdentityRole>(options =>

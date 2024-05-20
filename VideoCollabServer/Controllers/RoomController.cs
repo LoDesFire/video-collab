@@ -56,9 +56,7 @@ public class RoomController(IRoomRepository roomRepository): ControllerBase
         var identity = HttpContext.User.Identity as ClaimsIdentity; 
         var id = identity!.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")!.Value;
         
-        var res = await roomRepository.DeleteRoomAsync(id, roomId);
-        if (!res.Succeeded)
-            return BadRequest(res.Errors);
+        await roomRepository.DeleteRoomAsync(id, roomId);
         
         return Ok();
     }

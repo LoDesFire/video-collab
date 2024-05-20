@@ -25,15 +25,15 @@ public class HlsService : IHlsService
 
     private readonly Queue<int> _transcodingQueue;
 
+    private readonly IServiceScopeFactory _serviceScope;
+
     private bool _transcoderBusy;
-
-    private readonly ITranscodingMovieRepository _transcodingMovieRepository;
-
-    public HlsService(IConfiguration configuration, ITranscodingMovieRepository transcodingMovieRepository)
+    
+    public HlsService(IConfiguration configuration, IServiceScopeFactory serviceScope)
     {
         _ffmpegExecutable = configuration.GetSection("Executables")["ffmpeg"]!;
         _transcodingQueue = new Queue<int>();
-        _transcodingMovieRepository = transcodingMovieRepository;
+        _serviceScope = serviceScope;
     }
 
     private async void RunTranscoding()
@@ -46,11 +46,11 @@ public class HlsService : IHlsService
             var processResult = CreateTranscodeMovieProcess(process, movieId);
             if (!processResult.Succeeded)
             {
-                await _transcodingMovieRepository.ChangeMovieStatusAsync(movieId, Movie.Statuses.StartTranscodingError);
+                await ChangeMovieStatusAsync(movieId, Movie.Statuses.StartTranscodingError);
                 continue;
             }
             
-            await _transcodingMovieRepository.ChangeMovieStatusAsync(movieId, Movie.Statuses.Transcoding);
+            await ChangeMovieStatusAsync(movieId, Movie.Statuses.Transcoding);
 
             process.Start();
 
@@ -58,14 +58,21 @@ public class HlsService : IHlsService
 
             if (process.ExitCode != 0)
             {
-                await _transcodingMovieRepository.ChangeMovieStatusAsync(movieId, Movie.Statuses.TranscodingError);
+                await ChangeMovieStatusAsync(movieId, Movie.Statuses.TranscodingError);
                 continue;
             }
 
-            await _transcodingMovieRepository.ChangeMovieStatusAsync(movieId, Movie.Statuses.ReadyToView);
+            await ChangeMovieStatusAsync(movieId, Movie.Statuses.ReadyToView);
             // TODO: Add Transcoding progress
         }
         _transcoderBusy = false;
+    }
+
+    private async Task ChangeMovieStatusAsync(int movieId, Movie.Statuses status)
+    {
+        using var myScope = _serviceScope.CreateScope();
+        var myService = myScope.ServiceProvider.GetRequiredService<ITranscodingMovieRepository>();
+        await myService.ChangeMovieStatusAsync(movieId, status);
     }
 
     private Result CreateTranscodeMovieProcess(Process process, int movieId)

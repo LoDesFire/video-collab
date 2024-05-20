@@ -104,19 +104,13 @@ public class RoomRepository(ApplicationContext context, IJanusTextroomService ja
             .FirstAsync(u => u.Id == userId);
 
         var room = await context.Rooms.FirstOrDefaultAsync(r => r.Id == roomId);
-        if (room == null)
-            return Result.Error("Room doesn't exist");
-
-        if (!user.OwnedRooms.Contains(room))
+        if (room == null || !user.OwnedRooms.Contains(room))
             return Result.Error("Forbidden");
-
-        var destroyingRes = await janusTextroomService.DestroyRoom(roomId, room.TextRoomSecret);
-        if (!destroyingRes.Succeeded)
-            return Result.Error(destroyingRes.Errors);
-            
+        
         context.Rooms.Remove(room);
         await context.SaveChangesAsync();
         
-        return Result.Ok();
+        var destroyingRes = await janusTextroomService.DestroyRoom(roomId, room.TextRoomSecret);
+        return !destroyingRes.Succeeded ? Result.Error(destroyingRes.Errors) : Result.Ok();
     }
 }
