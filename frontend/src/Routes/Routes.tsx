@@ -10,6 +10,7 @@ import ConnectToRoomPage from "../Pages/ConnectToRoomPage/ConnectToRoomPage";
 import CreateRoomPage from "../Pages/CreateRoomPage/CreateRoomPage";
 import {VideoTestPage} from "../Pages/VideoTest/VideoTest";
 import {UploadVideoPage} from "../Pages/UploadVideo/UploadVideoPage";
+import {ChatTestPage} from "../Pages/ChatTest/ChatTest";
 
 export const router = createBrowserRouter([
         {
@@ -23,22 +24,29 @@ export const router = createBrowserRouter([
                 {
                     path: "login",
                     element:
-                        /*<NotAuthRequiredProtectRoute>*/
-                            <LoginPage/>
-                        /*</NotAuthRequiredProtectRoute>*/
+                    /*<NotAuthRequiredProtectRoute>*/
+                        <LoginPage/>
+                    /*</NotAuthRequiredProtectRoute>*/
                 },
                 {
                     path: "register",
                     element:
-                        /*<NotAuthRequiredProtectRoute>*/
-                            <RegisterPage/>
-                       /* </NotAuthRequiredProtectRoute>*/
+                    /*<NotAuthRequiredProtectRoute>*/
+                        <RegisterPage/>
+                    /* </NotAuthRequiredProtectRoute>*/
                 },
                 {
                     path: "profile",
                     element:
                         <AuthRequiredProtectRoute>
                             <ProfilePage/>
+                        </AuthRequiredProtectRoute>
+                },
+                {
+                    path: "connect/:id",
+                    element:
+                        <AuthRequiredProtectRoute>
+                            <ConnectToRoomPage/>
                         </AuthRequiredProtectRoute>
                 },
                 {
@@ -65,6 +73,10 @@ export const router = createBrowserRouter([
                 {
                     path: "test/view/:id",
                     element: <VideoTestPage/>
+                },
+                {
+                    path: "test/chat",
+                    element: <ChatTestPage/>
                 }
             ]
         }

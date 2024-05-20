@@ -6,6 +6,7 @@ import * as Yup from "yup";
 import {toast} from "react-toastify";
 import {userPinMovieAPI, userUnpinMovieAPI} from "../../Services/UserService";
 import {useNavigate} from "react-router-dom";
+import Navbar from "../../Components/Navbar/Navbar";
 
 type CreateMovieForm = {
     name: string;
@@ -198,6 +199,7 @@ export const UploadVideoPage = () => {
 
     return (
         <>
+            <Navbar/>
             <section className="bg-white">
                 <div className="flex flex-col items-center justify px-6 py-8 mx-auto my-20">
                     {MovieInfoForm}

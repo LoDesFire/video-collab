@@ -10,7 +10,6 @@ function App() {
     return (
         <>
             <UserProvider>
-                <Navbar/>
                 <Outlet/>
                 <ToastContainer/>
             </UserProvider>

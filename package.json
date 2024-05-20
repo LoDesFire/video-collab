@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "janus-gateway": "^1.2.3",
+    "sdp": "^3.2.0",
+    "webrtc-adapter": "^9.0.1"
+  }
+}

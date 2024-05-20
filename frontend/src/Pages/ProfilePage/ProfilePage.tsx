@@ -5,6 +5,7 @@ import {UserProfileInfo} from "../../Models/User";
 import {MovieList} from "../../Components/MovieCard/MovieCardList";
 import {toast} from "react-toastify";
 import {Link} from "react-router-dom";
+import Navbar from "../../Components/Navbar/Navbar";
 
 type Props = {};
 
@@ -63,6 +64,7 @@ const ProfilePage = (props: Props) => {
 
     return (
         <>
+            <Navbar/>
             <div className="container mx-auto w-full my-10">
                 <div className="flex w-full justify-between">
                     <h1 className="text-3xl text-left font-bold">

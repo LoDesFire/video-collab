@@ -17,3 +17,18 @@ export type UserProfileInfo = {
     users: [],
     ownedRooms: []
 }
+
+export type CreateRoomInfo = {
+    id: string,
+    owner: {
+        id: string,
+        textroomToken: string,
+        username: string
+    }
+}
+
+export type JoinRoomInfo = {
+    id: string,
+    textroomToken: string,
+    username: string
+}
