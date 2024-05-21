@@ -17,6 +17,13 @@ public class MovieController(
     ITranscodingMovieRepository transcodingMovieRepository)
     : ControllerBase // TODO: Movie Status handler
 {
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAllMovies()
+    {
+        var moviesResult = await repository.ReadyToViewMoviesAsync();
+        return !moviesResult.Succeeded ? StatusCode(500, "Internal Server Error") : Ok(moviesResult.Value);
+    }
+    
     [HttpDelete]
     public async Task<IActionResult> DeleteMovie([FromQuery][Required] int movieId)
     {

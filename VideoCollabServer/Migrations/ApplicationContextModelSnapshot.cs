@@ -468,7 +468,8 @@ namespace VideoCollabServer.Migrations
                 {
                     b.HasOne("VideoCollabServer.Models.Movie", "Movie")
                         .WithMany("Links")
-                        .HasForeignKey("MovieId");
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Movie");
                 });

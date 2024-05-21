@@ -3,6 +3,7 @@ using VideoCollabServer.Data;
 using VideoCollabServer.Dtos;
 using VideoCollabServer.Dtos.Movie;
 using VideoCollabServer.Interfaces;
+using VideoCollabServer.Mappers;
 using VideoCollabServer.Models;
 
 namespace VideoCollabServer.Repositories;
@@ -14,18 +15,24 @@ public class MovieRepository(ApplicationContext context, ILinkRepository linkRep
 
     public async Task DeleteMovieAsync(int movieId)
     {
-        var movie = await Context.Movies.FindAsync(movieId);
-
+        var movie = await Context.Movies
+            .Include(m => m.Links)
+            .Include(m => m.Files)
+            .FirstOrDefaultAsync(m => m.Id == movieId);
         if (movie == null)
             return;
+        
+        movie.Links.Clear();
+        movie.Files.Clear();
+        Context.Movies.Remove(movie);
 
-        Context.Remove(movie);
+        await Context.SaveChangesAsync();
     }
 
     public async Task<Result<CreatedMovieDto>> CreateMovieAsync(CreateMovieDto createMovieDto)
     {
         List<Link> movieLinks = [];
-        
+
         if (createMovieDto.TrailerLink != null)
         {
             var trailer = await LinkRepository
@@ -75,7 +82,7 @@ public class MovieRepository(ApplicationContext context, ILinkRepository linkRep
                 }
             };
         }
-        
+
         return new Result<CreatedMovieDto>
         {
             Succeeded = true,
@@ -89,5 +96,16 @@ public class MovieRepository(ApplicationContext context, ILinkRepository linkRep
     public async Task<bool> ContainsMovieAsync(int movieId)
     {
         return await Context.Movies.FirstOrDefaultAsync(m => m.Id == movieId) != null;
+    }
+
+    public async Task<Result<IEnumerable<PinnedMovieDto>>> ReadyToViewMoviesAsync()
+    {
+        return Result<IEnumerable<PinnedMovieDto>>.Ok(
+            await Context.Movies
+                .Include(m => m.Links)
+                .Where(m => m.Status == Movie.Statuses.ReadyToView)
+                .Select(m => m.ToPinnedDto())
+                .ToListAsync()
+        );
     }
 }

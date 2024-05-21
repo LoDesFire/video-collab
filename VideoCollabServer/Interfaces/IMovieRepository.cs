@@ -8,6 +8,8 @@ public interface IMovieRepository
     Task<Result<CreatedMovieDto>> CreateMovieAsync(CreateMovieDto createMovieDto);
     Task DeleteMovieAsync(int movieId);
 
+    Task<Result<IEnumerable<PinnedMovieDto>>> ReadyToViewMoviesAsync();
+
     Task<bool> ContainsMovieAsync(int movieId);
     
     
