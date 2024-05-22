@@ -63,7 +63,8 @@ public class MovieRepository(ApplicationContext context, ILinkRepository linkRep
         {
             Description = createMovieDto.Description,
             Links = movieLinks,
-            Name = createMovieDto.Name
+            Name = createMovieDto.Name,
+            Status = Movie.Statuses.NotUploaded
         };
 
         try

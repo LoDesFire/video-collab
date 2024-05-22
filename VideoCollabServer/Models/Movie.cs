@@ -8,6 +8,7 @@ public class Movie
     public enum Statuses
     {
         ReadyToView,
+        NotUploaded,
         InQueue,
         Transcoding,
         TranscodingError,
@@ -23,7 +24,6 @@ public class Movie
     public string? Description { get; set; }
     public Statuses Status { get; set; }
     public List<Link> Links { get; set; } = [];
-    
     public List<File> Files { get; set; } = [];
     public List<User> UsersPinnedMovie { get; set; } = [];
     
