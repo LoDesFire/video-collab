@@ -1,5 +1,6 @@
 import exp from "node:constants";
 import {MovieDto} from "./MovieDto";
+import {RoomItemDto} from "./RoomItemDto";
 
 export type UserProfileToken = {
     id: string,
@@ -15,7 +16,7 @@ export type UserProfileId = {
 export type UserProfileInfo = {
     pinnedMovies: MovieDto[],
     users: [],
-    ownedRooms: []
+    ownedRooms: RoomItemDto[]
 }
 
 export type CreateRoomInfo = {

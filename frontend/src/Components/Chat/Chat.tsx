@@ -1,30 +1,65 @@
 import React, {useEffect, useRef, useState} from "react";
 import {Message} from "./Message";
 import {MessageModel} from "./MessageModel";
-import {AiOutlineLink, AiOutlineSend, AiOutlineTeam, AiOutlineCloseCircle} from "react-icons/ai";
-import {handleError} from "../../Helper/ErrorHandler";
+import {
+    AiOutlineLink,
+    AiOutlineSend,
+    AiOutlineTeam,
+    AiOutlineCloseCircle,
+    AiOutlineVideoCameraAdd
+} from "react-icons/ai";
 import {toast} from "react-toastify";
-import {wait} from "@testing-library/user-event/dist/utils";
-import {leaveRoom} from "../../Services/UserService";
-import {useNavigate} from "react-router-dom";
+import {MembersElement} from "./MembersElement";
+import {MovieDto} from "../../Models/MovieDto";
+import {MoviesListElement} from "./MovieListElement";
+import {movieAddNew} from "../../Services/MovieService";
 
 type ChatProps = {
     messages: MessageModel[],
     chatMembers: Map<string, string>
     sendMessage: (text: string) => void,
     leaveFromRoom: () => void,
+    setOperator: (id: string) => void,
+    isOwner: boolean,
+    operatorId: string | undefined,
+    myId: string,
+    movieList: MovieDto[]
 }
 
-export const Chat = ({messages, sendMessage, chatMembers, leaveFromRoom}: ChatProps) => {
+enum ChatStates {
+    Chat,
+    Members,
+    Movies
+}
+
+export const Chat = ({
+                         messages,
+                         sendMessage,
+                         chatMembers,
+                         leaveFromRoom,
+                         setOperator,
+                         isOwner,
+                         operatorId,
+                         myId,
+                         movieList
+                     }: ChatProps) => {
 
     const [input, setInput] = useState<string>('');
     const [showChatMembers, setShowChatMembers] = useState(false)
+
+    const [currentChatState, setCurrentChatState] = useState(ChatStates.Chat)
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const handlePressEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key == "Enter")
             handleSend()
     }
+
+    useEffect(() => {
+        if (!isOwner && myId != operatorId && currentChatState == ChatStates.Movies) {
+            setCurrentChatState(ChatStates.Chat)
+        }
+    }, [operatorId]);
 
 
     const handleSend = () => {
@@ -48,7 +83,11 @@ export const Chat = ({messages, sendMessage, chatMembers, leaveFromRoom}: ChatPr
     }
 
     const handleShowChatMembers = () => {
-        setShowChatMembers(!showChatMembers)
+        setCurrentChatState(currentChatState != ChatStates.Members ? ChatStates.Members : ChatStates.Chat)
+    }
+
+    const handleShowMovies = () => {
+        setCurrentChatState(currentChatState != ChatStates.Movies ? ChatStates.Movies : ChatStates.Chat)
     }
 
     useEffect(() => {
@@ -59,6 +98,7 @@ export const Chat = ({messages, sendMessage, chatMembers, leaveFromRoom}: ChatPr
             });
         }
     }, [messages.length, showChatMembers]);
+
     const ChatElement =
         <>
             <h2 className="text-xl font-bold mb-4 pl-4 pt-4">Chat</h2>
@@ -70,7 +110,7 @@ export const Chat = ({messages, sendMessage, chatMembers, leaveFromRoom}: ChatPr
                     <div ref={messagesEndRef}/>
                 </div>
             </div>
-            <div className="p-4 bg-white border-t flex ">
+            <div className="p-4 bg-gray-100 border-t flex ">
                 <input
                     type="text"
                     className="flex-grow p-2 border rounded-l"
@@ -87,27 +127,22 @@ export const Chat = ({messages, sendMessage, chatMembers, leaveFromRoom}: ChatPr
             </div>
         </>
 
-    const MembersElement =
-        <>
-            <h2 className="text-xl font-bold mb-4 pl-4 pt-4">Members</h2>
-            <div className="flex flex-col h-full overflow-y-auto p-4">
-                <div className="flex flex-col flex-grow">
-                    {Array.from(chatMembers.values()).map((member, index) => (
-                        <div className="flex items-center p-2 mt-2.5 mb-2.5 bg-gray-600 rounded text-white" key={index}>
-                            <div className="w-12 text-left">{index + 1}.</div>
-                            <div className="flex-1 text-center">{member}</div>
-                        </div>
-                    ))}
-                    <div ref={messagesEndRef}/>
-                </div>
-            </div>
-        </>
-
 
     return (
         <div className="flex flex-col h-full">
-            {!showChatMembers ? ChatElement : MembersElement}
-            <div className="p-4 bg-white border-t flex ">
+            {currentChatState == ChatStates.Chat && ChatElement}
+            {currentChatState == ChatStates.Members &&
+                (
+                    <MembersElement
+                        chatMembers={chatMembers}
+                        isOwner={isOwner}
+                        setOperator={setOperator}
+                        myId={myId}
+                        operatorId={operatorId}/>
+                )
+            }
+            {currentChatState == ChatStates.Movies && <MoviesListElement movieList={movieList}/>}
+            <div className="p-4 bg-gray-100 border-t flex ">
                 <button
                     onClick={handleCopyLink}
                     className="ml-2 mr-2 p-1 rounded hover:bg-gray-100">
@@ -116,13 +151,23 @@ export const Chat = ({messages, sendMessage, chatMembers, leaveFromRoom}: ChatPr
                 <button
                     onClick={handleShowChatMembers}
                     className={
-                        "ml-2 mr-2 p-1 rounded hover:bg-gray-100 " +
-                        (showChatMembers ? "bg-green-400 rounded" : "")}>
+                        "ml-2 mr-2 p-1 rounded hover:bg-gray-0 " +
+                        (currentChatState == ChatStates.Members ? "bg-green-400 rounded" : "")}>
                     <AiOutlineTeam size={24}/>
                 </button>
+                {(operatorId == myId || isOwner) && (
+                    <button
+                        onClick={handleShowMovies}
+                        className={
+                            "ml-2 mr-2 p-1 rounded hover:bg-gray-0 " +
+                            (currentChatState == ChatStates.Movies ? "bg-green-400 rounded" : "")}>
+                        <AiOutlineVideoCameraAdd size={24}/>
+                    </button>
+                )
+                }
                 <button
                     onClick={handleLeavePage}
-                    className="ml-2 mr-2 p-1 rounded hover:bg-gray-100">
+                    className="ml-2 mr-2 p-1 rounded hover:bg-gray-0">
                     <AiOutlineCloseCircle color="red" size={24}/>
                 </button>
             </div>

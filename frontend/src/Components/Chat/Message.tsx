@@ -26,7 +26,7 @@ export const Message = ({text, from, messageType}: MessageProps) => {
                 messageType == MessageTypesEnum.message &&
                 (
                     <div
-                        className="bg-gray-100 rounded break-words pl-2">
+                        className="bg-gray-50 rounded-l break-words pl-2">
                         <h6 className="text-green-700">{from} </h6>
                         <h1 className="text-gray-700 text-lg">{text}</h1>
                     </div>

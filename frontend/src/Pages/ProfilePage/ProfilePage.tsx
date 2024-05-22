@@ -1,11 +1,12 @@
 import React, {useEffect, useState} from "react";
 import {useAuth} from "../../Context/useAuth";
-import {userInfoGetAPI, userPinMovieAPI, userUnpinMovieAPI} from "../../Services/UserService";
+import {deleteRoom, userInfoGetAPI, userPinMovieAPI, userUnpinMovieAPI} from "../../Services/UserService";
 import {UserProfileInfo} from "../../Models/User";
 import {MovieList} from "../../Components/MovieCard/MovieCardList";
 import {toast} from "react-toastify";
 import {Link} from "react-router-dom";
 import Navbar from "../../Components/Navbar/Navbar";
+import {RoomList} from "../../Components/RoomCard/RoomCardList";
 
 type Props = {};
 
@@ -58,7 +59,15 @@ const ProfilePage = (props: Props) => {
                     return it
                 })
             }
-        }).catch(() => {
+        })
+    }
+
+    const handleDeleteRoom = (id: string) => {
+        deleteRoom(id).then(r => {
+            if(r?.status == 200) {
+                getUserInfo()
+                toast.success("Комната удалена")
+            }
         })
     }
 
@@ -83,6 +92,12 @@ const ProfilePage = (props: Props) => {
                            userPinMovie={(id: number) => userPinMovie(id)}
                            userUnpinMovie={(id: number) => userUnpinMovie(id)}
                 />
+                <div className="flex w-full justify-between">
+                    <h1 className="text-3xl text-left font-bold">
+                        Комнаты
+                    </h1>
+                </div>
+                <RoomList myRoomsList={userInfo?.ownedRooms ? userInfo.ownedRooms : []} onDelete={handleDeleteRoom}/>
             </div>
         </>
     );

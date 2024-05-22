@@ -78,7 +78,7 @@ export const UploadVideoPage = () => {
             setProgress(Math.round((100 * event.loaded) / event.total));
         })
             .then((response) => {
-                setMessage(response.data.message);
+                setMessage(response?.data.message);
                 saveToFavourite()
             })
             .catch((err) => {

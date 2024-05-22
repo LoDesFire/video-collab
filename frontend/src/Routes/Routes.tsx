@@ -72,7 +72,7 @@ export const router = createBrowserRouter([
                 },
                 {
                     path: "test/view/:id",
-                    element: <VideoTestPage/>
+                    element: <VideoTestPage movieId={1} sync={() => {}} isOperator={true} syncedTime={0} syncedPause={false}/>
                 },
                 {
                     path: "test/chat",

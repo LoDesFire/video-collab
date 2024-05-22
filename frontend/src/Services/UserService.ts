@@ -14,7 +14,7 @@ export const userInfoGetAPI = async () => {
 
 export const createRoom = async () => {
     try {
-        return await axios.post<CreateRoomInfo>("room", {private: true})
+        return await axios.post<CreateRoomInfo>("room?private=true", )
     } catch (error) {
         handleError(error)
     }
@@ -31,6 +31,14 @@ export const leaveRoom = async (roomId: string) => {
 export const connectRoom = async (roomId: string) => {
     try {
         return await axios.get<JoinRoomInfo>("room/join?roomId=" + roomId)
+    } catch (error) {
+        handleError(error)
+    }
+}
+
+export const deleteRoom = async (roomId: string) => {
+    try {
+        return await axios.delete("room?roomId=" + roomId)
     } catch (error) {
         handleError(error)
     }

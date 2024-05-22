@@ -10,6 +10,9 @@ import {MessageTypesEnum} from "../../Components/Chat/MessageTypesEnum";
 import {type} from "node:os";
 import {leaveRoom} from "../../Services/UserService";
 import {useNavigate} from "react-router-dom";
+import {getAllMovie} from "../../Services/MovieService";
+import {MovieDto} from "../../Models/MovieDto";
+import {VideoTestPage} from "../VideoTest/VideoTest";
 
 export const ChatTestPage = () => {
 
@@ -24,11 +27,27 @@ export const ChatTestPage = () => {
         RoomNotExist
     }
 
+    const [movieList, setMovieList] = useState<MovieDto[]>([])
+
+    useEffect(() => {
+        getAllMovie().then((r) => {
+            if (r?.status == 200)
+                setMovieList(r.data)
+        })
+    }, []);
+
     let myUsername: string | undefined = "";
 
     const [dp, setDp] = useState(JanusJS.useDefaultDependencies({adapter: adapter}))
     const [currentPageState, setCurrentPageState] = useState(stateOfPage.Connecting)
     let janus: JanusJS;
+
+    const [isOwner, setIsOwner] = useState(false)
+    const [whoIsOperator, setWhoIsOperator] = useState<string | undefined>()
+    const [myId, setMyId] = useState<string>()
+
+    const [syncedIsPlay, setSyncedIsPlay] = useState(false)
+    const [syncedTime, setSyncedTime] = useState(0)
 
     let [messageList, setMessageList] = useState<MessageModel[]>([])
 
@@ -44,7 +63,7 @@ export const ChatTestPage = () => {
 
     function InitJanus() {
         JanusJS.init({
-            debug: true,
+            debug: "all",
             dependencies: dp,
             callback: function () {
                 if (!JanusJS.isWebrtcSupported()) {
@@ -109,7 +128,6 @@ export const ChatTestPage = () => {
                                     ondata: function (data: any) {
                                         toast(data as string)
                                         JanusJS.debug("We got data from the DataChannel!", data);
-                                        //toast.success("ONDATA:" + data)
                                         let json = JSON.parse(data);
                                         let what = json["textroom"]
                                         let from = ""
@@ -123,29 +141,47 @@ export const ChatTestPage = () => {
                                                     mapOfUsername.set(un, i["display"])
                                                     setMapOfUsername(mapOfUsername)
                                                 }
+                                            if (json["is_owner"])
+                                                setIsOwner(json["is_owner"])
+                                            if (json["is_operator"] == true)
+                                                setWhoIsOperator(json["username"])
+                                            else if (json["is_operator"] == false)
+                                                setWhoIsOperator(undefined)
+                                            if (json["operator_id"] != undefined)
+                                                setWhoIsOperator(json["operator_id"])
                                         } else if (what === "error") {
                                             if (json["error_code"] == 417) setCurrentPageState(stateOfPage.RoomNotExist)
                                             if (json["error_code"] == 419) setCurrentPageState(stateOfPage.RegisterUserError)
                                             if (json["error_code"] == 420) window.location.reload()
+                                        } else if (what === "new_operator") {
+                                            setWhoIsOperator(json["username"])
+                                        } else if (what === "sync") {
+                                            if(json["is_playing"] != undefined) {
+                                                setSyncedIsPlay(json["is_playing"])
+                                            }
+                                            if(json["time"] != undefined) {
+                                                setSyncedTime(json["time"])
+                                            }
                                         } else {
                                             if (what === "message") {
                                                 console.log("message")
                                                 type = MessageTypesEnum.message
                                                 from = json["from"]
                                                 text = json["text"]
-                                            } else
-                                            if (what === "leave") {
+                                            } else if (what === "leave") {
                                                 console.log("leave")
                                                 type = MessageTypesEnum.leave
                                                 from = json["username"]
                                                 name = mapOfUsername.get(from) as string
                                                 mapOfUsername.delete(from)
                                                 setMapOfUsername(mapOfUsername)
-                                            } else
-                                            if (what === "join") {
+                                            } else if (what === "join") {
                                                 console.log("join")
                                                 type = MessageTypesEnum.join
                                                 from = json["username"]
+                                                if (json["display"] == myUsername) {
+                                                    setMyId(from)
+                                                }
                                                 mapOfUsername.set(from, json["display"])
                                                 setMapOfUsername(mapOfUsername)
                                                 console.log("MAP " + mapOfUsername.keys())
@@ -217,18 +253,24 @@ export const ChatTestPage = () => {
         });
     }
 
-    const [input, setInput] = useState<string>('');
-
-    function sendRandomData() {
+    function setOperator(id: string) {
+        const myRoom = localStorage.getItem("roomid")
+        let message = {
+            textroom: "set_operator",
+            transaction: JanusJS.randomString(12),
+            room: myRoom,
+            username: id,
+        };
+        console.log(JSON.stringify(message))
+        console.log("!!!SET OPERATOR!!! " + textRoom)
         textRoom.data({
-            data: input,
-            success: function () {
-                toast.success("SUCCESS")
+            data: JSON.stringify(message),
+            error: function (reason: string) {
+                toast.error(reason);
             },
-            error: function () {
-                toast.error("ERROR")
+            success: function () {
             }
-        })
+        });
     }
 
     const navigate = useNavigate();
@@ -276,9 +318,29 @@ export const ChatTestPage = () => {
             },
             success: function () {
                 setCurrentPageState(stateOfPage.Success)
-                toast.success("Register")
+                toast.success("Register " + transaction)
             }
         });
+    }
+
+    const syncVideo = (isPlaying: boolean, currentTime: number) => {
+        if (isPlaying != undefined && currentTime != undefined) {
+            const myRoom = localStorage.getItem("roomid")
+            let message = {
+                textroom: "sync",
+                room: myRoom,
+                transaction: JanusJS.randomString(12),
+                is_playing: isPlaying,
+                time: currentTime
+            };
+            console.log(JSON.stringify(message))
+            textRoom.data({
+                data: JSON.stringify(message),
+                error: function (reason: string) {
+                    toast.error(reason);
+                }
+            });
+        }
     }
 
     const ConnectingElement = <div>
@@ -296,30 +358,40 @@ export const ChatTestPage = () => {
         Room not exist
     </div>
 
+    const successPage =
+        <div className="h-screen grid grid-cols-4">
+            <div className="col-span-3 flex flex-col items-center justify-center relative">
+                <div className="relative w-full">
+                    <VideoTestPage
+                        movieId={1}
+                        sync={syncVideo}
+                        isOperator={myId == whoIsOperator}
+                        syncedTime={syncedTime}
+                        syncedPause={syncedIsPlay}
+                    />
+                </div>
+            </div>
+            <div className="col-span-1 row-span-6 h-full bg-gray-100">
+                <Chat
+                    messages={messageList}
+                    chatMembers={mapOfUsername}
+                    sendMessage={sendData}
+                    leaveFromRoom={leaveFromRoom}
+                    setOperator={setOperator}
+                    isOwner={isOwner}
+                    myId={myId as string}
+                    operatorId={whoIsOperator}
+                    movieList={movieList}
+                />
+            </div>
+        </div>
+
 
     return (
         <>
-            <div>
-                <textarea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                />
-                <button onClick={sendRandomData}>SEND IT!!!</button>
-            </div>
             {currentPageState == stateOfPage.Connecting ? (ConnectingElement) : (<></>)}
             {currentPageState == stateOfPage.RegisterUser ? (RegisteringUser) : (<></>)}
-            {currentPageState == stateOfPage.Success ? (
-                <div className="flex justify-center items-center h-screen bg-gray-100">
-                    <div className="w-full max-w-md h-full bg-white shadow-lg border rounded">
-                        <Chat
-                            messages={messageList}
-                            chatMembers={mapOfUsername}
-                            sendMessage={sendData}
-                            leaveFromRoom={leaveFromRoom}
-                        />
-                    </div>
-                </div>
-            ) : (<></>)}
+            {currentPageState == stateOfPage.Success ? (successPage) : (<></>)}
             {currentPageState == stateOfPage.WebRTCSupportError ? (Error) : (<></>)}
             {currentPageState == stateOfPage.CouldNotConnectToServer ? (Error) : (<></>)}
             {currentPageState == stateOfPage.AttachTextRoomError ? (Error) : (<></>)}

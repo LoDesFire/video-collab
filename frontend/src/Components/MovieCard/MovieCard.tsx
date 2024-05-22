@@ -5,14 +5,14 @@ import {AiFillStar, AiTwotoneStar} from 'react-icons/ai';
 
 interface Props {
     movie: MovieDto;
-    pinned: boolean;
+    pinned: boolean | undefined;
     userPinMovie: (id: number) => void;
     userUnpinMovie: (id: number) => void;
 }
 
 export const MovieCard = ({movie, pinned, userPinMovie, userUnpinMovie}: Props) => {
 
-    const [isPinned, setPinned] = useState<boolean>(pinned)
+    const [isPinned, setPinned] = useState<boolean | undefined>(pinned)
 
     return (
         <div className="bg-white w shadow rounded-lg overflow-hidden">
@@ -27,7 +27,7 @@ export const MovieCard = ({movie, pinned, userPinMovie, userUnpinMovie}: Props) 
                             {movie.name}
                         </h2>
                     </Link>
-                    {
+                    { isPinned != undefined && (
                         isPinned ? (
                             <AiFillStar size={30}
                                         className="fill-green-700 hover:fill-green-600"
@@ -42,7 +42,7 @@ export const MovieCard = ({movie, pinned, userPinMovie, userUnpinMovie}: Props) 
                                                userPinMovie(movie.id)
                                                setPinned(true)
                                            }}/>
-                        )
+                        ))
                     }
                 </div>
                 <h3 className="mt-1 text-sm pb-1">
