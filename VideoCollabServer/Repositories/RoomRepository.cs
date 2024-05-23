@@ -5,19 +5,21 @@ using VideoCollabServer.Dtos.Room;
 using VideoCollabServer.Dtos.User;
 using VideoCollabServer.Interfaces;
 using VideoCollabServer.Models;
+using VideoCollabServer.Services;
 
 namespace VideoCollabServer.Repositories;
 
-public class RoomRepository(ApplicationContext context, IJanusTextroomService janusTextroomService) : IRoomRepository
+public class RoomRepository(ApplicationContext context, JanusTextroomService janusTextroomService, JanusVideoRoomService janusVideoRoomService) : IRoomRepository
 {
     public async Task<Result<CreatedRoomDto>> CreateRoomAsync(string userId, bool @private)
     {
         var roomId = Guid.NewGuid().ToString();
         var secret = Guid.NewGuid().ToString();
 
-        var roomResult = await janusTextroomService.CreateRoom(userId, roomId, secret, true);
-        if (!roomResult.Succeeded)
-            return Result<CreatedRoomDto>.Error(roomResult.Errors.Append("Failed to create a room"));
+        var textRoomResult = await janusTextroomService.CreateRoom(userId, roomId, secret, true);
+        var videoRoomResult = await janusVideoRoomService.CreateRoom(userId, roomId, secret, true);
+        if (!videoRoomResult.Succeeded || !textRoomResult.Succeeded)
+            return Result<CreatedRoomDto>.Error(textRoomResult.Errors.Append("Failed to create a room"));
 
         var user = await context.Users.FirstAsync(u => u.Id == userId);
         var room = new Room
@@ -30,7 +32,7 @@ public class RoomRepository(ApplicationContext context, IJanusTextroomService ja
         };
         await context.Rooms.AddAsync(room);
         await context.SaveChangesAsync();
-
+        
         var joinRes = await JoinTheRoomAsync(userId, roomId);
         if (joinRes.Succeeded)
             return Result<CreatedRoomDto>.Ok(
@@ -58,9 +60,10 @@ public class RoomRepository(ApplicationContext context, IJanusTextroomService ja
             return Result<JoinedUserDto>.Error("Already joined");
 
         var userToken = user.GetRoomToken();
-        var allowResult = await janusTextroomService.AllowToken(userToken, roomId, room.TextRoomSecret);
-        if (!allowResult.Succeeded)
-            return Result<JoinedUserDto>.Error(allowResult.Errors.Append("Failed to add user token"));
+        var videoRoomAllowResult = await janusVideoRoomService.AllowToken(userToken, roomId, room.TextRoomSecret);
+        var textRoomAllowResult = await janusTextroomService.AllowToken(userToken, roomId, room.TextRoomSecret);
+        if (!videoRoomAllowResult.Succeeded || !textRoomAllowResult.Succeeded)
+            return Result<JoinedUserDto>.Error(videoRoomAllowResult.Errors.Any() ? videoRoomAllowResult.Errors : textRoomAllowResult.Errors);
 
         room.JoinedUsers.Add(user);
 
@@ -87,14 +90,9 @@ public class RoomRepository(ApplicationContext context, IJanusTextroomService ja
 
         user.ConnectedRooms.Remove(room);
 
-        // await janusTextroomService.DisallowToken(user.GetRoomToken(), roomId, room.TextRoomSecret);
+        // await janusRoomService.DisallowToken(user.GetRoomToken(), roomId, room.TextRoomSecret);
 
         await context.SaveChangesAsync();
-    }
-
-    public Task<Result> ChangeVideoOperator(string userId)
-    {
-        throw new NotImplementedException();
     }
 
     public async Task<Result> DeleteRoomAsync(string userId, string roomId)
@@ -110,7 +108,11 @@ public class RoomRepository(ApplicationContext context, IJanusTextroomService ja
         context.Rooms.Remove(room);
         await context.SaveChangesAsync();
         
-        var destroyingRes = await janusTextroomService.DestroyRoom(roomId, room.TextRoomSecret);
-        return !destroyingRes.Succeeded ? Result.Error(destroyingRes.Errors) : Result.Ok();
+        var textRoomDestroyingRes = await janusTextroomService.DestroyRoom(roomId, room.TextRoomSecret);
+        var videoRoomDestroyingRes = await janusVideoRoomService.DestroyRoom(roomId, room.TextRoomSecret);
+        if (!videoRoomDestroyingRes.Succeeded || !textRoomDestroyingRes.Succeeded)
+            return Result.Error(videoRoomDestroyingRes.Errors.Any() ? videoRoomDestroyingRes.Errors : textRoomDestroyingRes.Errors);
+        
+        return Result.Ok();
     }
 }

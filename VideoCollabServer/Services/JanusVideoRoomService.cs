@@ -3,33 +3,35 @@ using VideoCollabServer.Interfaces;
 
 namespace VideoCollabServer.Services;
 
-public class JanusTextroomService : IJanusRoomService
+public class JanusVideoRoomService : IJanusRoomService
 {
     private readonly IJanusPluginService _janusPluginService;
 
-    public JanusTextroomService(IJanusPluginService janusPluginService)
+    public JanusVideoRoomService(IJanusPluginService janusPluginService)
     {
         _janusPluginService = janusPluginService;
-        _janusPluginService.PluginName = "textroom";
+        _janusPluginService.PluginName = "videoroom";
     }
 
     public async Task<Result> CreateRoom(string userId, string roomId, string secret, bool @private)
     {
-        var res = await _janusPluginService.HandlePluginResponse(new JanusCreateTextroomDtoDto
-        {
-            AdminKey = _janusPluginService.Secret,
-            Request = "create",
-            OwnerId = userId,
-            Secret = secret,
-            Room = roomId,
-            Private = @private
-        });
+        var res = await _janusPluginService.HandlePluginResponse(
+            new JanusCreateVideoRoomDto
+            {
+                Request = "create",
+                AdminKey = _janusPluginService.Secret,
+                Room = roomId,
+                Private = @private,
+                Secret = secret
+            }
+        );
+        
         if (!res.Succeeded)
             return Result.Error(res.Errors);
 
         return await ActivateAcl(roomId, secret);
     }
-
+        
     private async Task<Result> ActivateAcl(string roomId, string secret)
     {
         return await _janusPluginService.HandlePluginResponse(
@@ -42,7 +44,7 @@ public class JanusTextroomService : IJanusRoomService
             }
         );
     }
-
+    
     private async Task<Result> AllowedRequest(string action, string token, string roomId, string secret)
     {
         return await _janusPluginService.HandlePluginResponse(

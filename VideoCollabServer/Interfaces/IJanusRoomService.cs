@@ -2,7 +2,7 @@ using VideoCollabServer.Dtos;
 
 namespace VideoCollabServer.Interfaces;
 
-public interface IJanusTextroomService
+public interface IJanusRoomService
 {
     public Task<Result> CreateRoom(string userId, string roomId, string secret, bool @private);
     public Task<Result> AllowToken(string token, string roomId, string secret);

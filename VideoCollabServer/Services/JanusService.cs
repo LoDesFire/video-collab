@@ -1,11 +1,10 @@
 using System.Text.Json;
 using RestSharp;
 using VideoCollabServer.Dtos;
-using VideoCollabServer.Interfaces;
 
 namespace VideoCollabServer.Services;
 
-public class JanusService : IJanusService
+public class JanusService
 {
     public string AdminSecret { get; set; }
     private string BaseUrl { get; }
@@ -82,7 +81,7 @@ public class JanusService : IJanusService
         if (!sId.Succeeded)
             return Result<string>.Error(sId.Errors);
         
-        var hId = await GetHandleId(sId.Value, "textroom");
+        var hId = await GetHandleId(sId.Value, pluginName);
         return !hId.Succeeded ? Result<string>.Error(hId.Errors) : Result<string>.Ok($"{sId.Value}/{hId.Value}");
     }
 
