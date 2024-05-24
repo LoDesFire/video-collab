@@ -2,16 +2,6 @@
 
 set -e
 
-# comment/add lines here to control which renditions would be created
-renditions=(
-# resolution  bitrate  audio-rate
-  "426x240    400k     64k"
-  "640x360    800k     96k"
-  "842x480    1400k    128k"
-  "1280x720   2800k    128k"
-#  "1920x1080  5000k    192k"
-)
-
 max_bitrate_ratio=1.07          # maximum accepted bitrate fluctuations
 rate_monitor_buffer_ratio=1.5   # maximum buffer size between bitrate conformance checks
 
@@ -20,6 +10,7 @@ rate_monitor_buffer_ratio=1.5   # maximum buffer size between bitrate conformanc
 source="${1}"
 target="${2}"
 ffmpeg="${3}"
+renditions=(${4})
 if [[ ! "${target}" ]]; then
   target="${source##*/}" # leave only last component of path
   target="${target%.*}"  # strip extension
@@ -55,11 +46,11 @@ for rendition in "${renditions[@]}"; do
   rendition="${rendition/[[:space:]]+/ }"
 
   # rendition fields
-  resolution="$(echo ${rendition} | cut -d ' ' -f 1)"
+  resolution="$(echo ${rendition} | cut -d '_' -f 1)"
   mkdir -p ${target}/qual${index} 
 
-  bitrate="$(echo ${rendition} | cut -d ' ' -f 2)"
-  audiorate="$(echo ${rendition} | cut -d ' ' -f 3)"
+  bitrate="$(echo ${rendition} | cut -d '_' -f 2)"
+  audiorate="$(echo ${rendition} | cut -d '_' -f 3)"
 
   # calculated fields
   width="$(echo ${resolution} | grep -oE '^[[:digit:]]+')"

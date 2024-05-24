@@ -1,9 +1,12 @@
 using System.Diagnostics;
+using System.Drawing;
 using VideoCollabServer.Dtos;
 using VideoCollabServer.Dtos.Movie;
 using VideoCollabServer.Interfaces;
 using VideoCollabServer.Models;
+using VideoCollabServer.Utils;
 using File = System.IO.File;
+
 
 namespace VideoCollabServer.Services;
 
@@ -13,12 +16,23 @@ public class HlsService : IHlsService
 
     private static readonly string HlsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "hls");
     
+    private static readonly string FramesPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "frames");
+    
     private static readonly List<string> SupportedVideoExtensions = ["mp4", "mov"];
     
     private static readonly Dictionary<string, string?> ContentType = new()
     {
         { ".ts", "video/MP2T" },
         { ".m3u8", "application/x-mpegURL" }
+    };
+
+    private static readonly Dictionary<int, string> Renditions = new()
+    {
+        {427, "427x240_576k_64k"},
+        {640, "640x360_704k_64k"},
+        {852, "852x480_896k_64k"},
+        {1280, "1280x720_1856k_128k"},
+        {1920,  "1920x1080_5000k_192k"}
     };
     
     private static string _ffmpegExecutable = null!;
@@ -42,14 +56,24 @@ public class HlsService : IHlsService
         while (_transcodingQueue.Count > 0)
         {
             var movieId = _transcodingQueue.Dequeue();
-            var process = new Process();
-            var processResult = CreateTranscodeMovieProcess(process, movieId);
-            if (!processResult.Succeeded)
+            
+            var rawDirectoryInfo = new DirectoryInfo(RawUploadsPath);
+            var movieFileInfo = rawDirectoryInfo.GetFiles($"mov_{movieId}.*").FirstOrDefault();
+            if (movieFileInfo is null || !movieFileInfo.Exists)
+            {
+                await ChangeMovieStatusAsync(movieId, Movie.Statuses.StartTranscodingError);
+                continue;
+            }
+            var moviePath = movieFileInfo.FullName;
+            var size = await GetVideoResolution(moviePath, movieId);
+            if (!size.Succeeded)
             {
                 await ChangeMovieStatusAsync(movieId, Movie.Statuses.StartTranscodingError);
                 continue;
             }
             
+            var process = new Process();
+            CreateTranscodeMovieProcess(process, movieId, size.Value, moviePath);
             await ChangeMovieStatusAsync(movieId, Movie.Statuses.Transcoding);
 
             process.Start();
@@ -75,30 +99,47 @@ public class HlsService : IHlsService
         await myService.ChangeMovieStatusAsync(movieId, status);
     }
 
-    private Result CreateTranscodeMovieProcess(Process process, int movieId)
+    private void CreateTranscodeMovieProcess(Process process, int movieId, Size rawMovieSize, string moviePath)
     {
-        var rawDirectoryInfo = new DirectoryInfo(RawUploadsPath);
-        var fileInfo = rawDirectoryInfo.GetFiles($"mov_{movieId}.*").FirstOrDefault();
-        if (fileInfo is null || !fileInfo.Exists)
-            return Result.Error("Raw video doesn't exist");
-
-        // TODO: Add resolutions mutable parameter
-        var path = fileInfo.FullName;
         var directoryOutput = Path.Combine(HlsPath, $"mov_{movieId}");
         const string shellFile = "Utils/ffmpeg.sh";
         
+        var renditions = Renditions
+            .Where(r => r.Key <= rawMovieSize.Width)
+            .Aggregate("", (current, r) => current + $"{r.Value} ");
+
         process.StartInfo = new ProcessStartInfo
         {
             FileName = $"{shellFile}",
-            Arguments = $"{path} {directoryOutput} {_ffmpegExecutable}",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            RedirectStandardInput = true,
+            Arguments = $"{moviePath} {directoryOutput} {_ffmpegExecutable} \"{renditions}\"",
             UseShellExecute = false,
-            CreateNoWindow = true
+            CreateNoWindow = true,
         };
+    }
 
-        return Result.Ok();
+    private async Task<Result<Size>> GetVideoResolution(string path, int movieId)
+    {
+        var frameOutput = Path.Combine(FramesPath, $"frame_{movieId}.jpg");
+        var proc = new Process();
+        proc.StartInfo = new ProcessStartInfo
+        {
+            FileName = "Utils/get_frame.sh",
+            Arguments = $"{path} {frameOutput}",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+        
+        proc.Start();
+        await proc.WaitForExitAsync();
+        try
+        {
+            var size = ImageDimensions.GetDimensions(frameOutput);
+            return Result<Size>.Ok(size);
+        }
+        catch (Exception)
+        {
+            return Result<Size>.Error("Possibly file is not exist");
+        }
     }
 
     public Result<HlsFileDto> GetHlsFile(int movieId, string quality, string file)

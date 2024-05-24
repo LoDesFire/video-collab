@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Emgu.CV.Bitmap" Version="4.9.0.5494" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.3" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.3" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.3" />
@@ -35,6 +36,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="uploads\frames\" />
       <Folder Include="uploads\hls" />
       <Folder Include="uploads\raw" />
     </ItemGroup>
