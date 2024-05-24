@@ -11,6 +11,7 @@ import CreateRoomPage from "../Pages/CreateRoomPage/CreateRoomPage";
 import {VideoTestPage} from "../Pages/VideoTest/VideoTest";
 import {UploadVideoPage} from "../Pages/UploadVideo/UploadVideoPage";
 import {ChatTestPage} from "../Pages/ChatTest/ChatTest";
+import {TestVideoRoom} from "../Pages/TestVideoRoom/TestVideoRoom";
 
 export const router = createBrowserRouter([
         {
@@ -72,7 +73,7 @@ export const router = createBrowserRouter([
                 },
                 {
                     path: "test/view/:id",
-                    element: <VideoTestPage movieId={1} sync={() => {}} isOperator={true} syncedTime={0} syncedPause={false}/>
+                    element: <VideoTestPage movieId={1} sync={() => {}} isOperator={true} syncedTime={0} syncedPause={false} playNext={() => {}}/>
                 },
                 {
                     path: "test/chat",

@@ -1,15 +1,11 @@
 import React, {useEffect, useRef, useState} from "react";
 import ReactPlayer from 'react-player/'
 import {
-    AiFillPlayCircle,
-    AiFillPauseCircle,
     AiOutlineFullscreen,
     AiOutlineFullscreenExit,
     AiOutlinePauseCircle, AiOutlinePlayCircle
 } from "react-icons/ai";
-import {toast} from "react-toastify";
 import fullscreen from "screenfull"
-import {useParams} from "react-router-dom";
 import Hls from "hls.js";
 import {wait} from "@testing-library/user-event/dist/utils";
 
@@ -18,20 +14,22 @@ type VideoProps = {
     sync: (isPlaying: boolean, currentTime: number) => void,
     isOperator: boolean,
     syncedPause: boolean,
-    syncedTime: number
+    syncedTime: number,
+    playNext: () => void
 }
 
-export const VideoTestPage = ({movieId, sync, isOperator, syncedTime, syncedPause}: VideoProps) => {
+export const VideoTestPage = ({movieId, sync, isOperator, syncedTime, syncedPause, playNext}: VideoProps) => {
     const refPlayer = useRef<ReactPlayer>(null)
     const containerRef = useRef(null);
 
-    const tmpUrl = "/api/movie/watch/" + movieId + "/.m3u8"
+    let tmpUrl = "/api/movie/watch/" + movieId + "/.m3u8"
+    const [duration, setDuration] = useState<number>(0)
     const [videoUrl, setVideoUrl] = useState(tmpUrl);
 
     const [state, setState] = useState({
         playing: false,
         volume: 0.5,
-        played: 0,
+        playedSec: 0,
         isFullScreen: false,
         listOfQualities: ["Auto"],
         qualitiesUrls: [tmpUrl],
@@ -40,11 +38,10 @@ export const VideoTestPage = ({movieId, sync, isOperator, syncedTime, syncedPaus
     })
 
     useEffect(() => {
-        let diff = syncedTime - state.played;
-        if(diff < 0) diff *= -1
-        if(diff > 0.05) {
-            refPlayer?.current?.seekTo(Number(syncedTime), "fraction")
-            setState({...state, played: Number(syncedTime)})
+        let diff = syncedTime - state.playedSec;
+        if (diff < -1 || diff > 1) {
+            refPlayer?.current?.seekTo(Number(syncedTime), "seconds")
+            setState({...state, playedSec: Number(syncedTime)})
         }
     }, [syncedTime]);
 
@@ -55,19 +52,22 @@ export const VideoTestPage = ({movieId, sync, isOperator, syncedTime, syncedPaus
     const {
         playing,
         volume,
-        played,
         isFullScreen,
-        quality
+        quality,
+        playedSec
     } = state
 
     useEffect(() => {
+        if (movieId == 0) return
+        let tempUrl = "/api/movie/watch/" + movieId + "/.m3u8"
+        setVideoUrl(tempUrl)
+        refPlayer?.current?.seekTo(state.playedSec, "seconds")
         if (Hls.isSupported()) {
             const hls = new Hls();
             hls.loadSource(tmpUrl);
-
             hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
-
                 const availableQualities = hls.levels
+                setDuration(refPlayer?.current?.getDuration() as number)
                 let listOfQualities = availableQualities.map((l) => String(l.height))
                 listOfQualities = ["Auto", ...listOfQualities]
                 let qualitiesUrls = availableQualities.map((l) => String(l.url[0]))
@@ -80,8 +80,11 @@ export const VideoTestPage = ({movieId, sync, isOperator, syncedTime, syncedPaus
     const handlePlay = () => {
         const cur = !state.playing
         setState({...state, playing: !state.playing})
-        if(isOperator)
-        sync(cur, state.played)
+        if (isOperator)
+            sync(cur, Number(state.playedSec) + 0.0001)
+    }
+
+    const handleNothing = () => {
     }
 
     const handleVolume = (e: any) => {
@@ -89,16 +92,17 @@ export const VideoTestPage = ({movieId, sync, isOperator, syncedTime, syncedPaus
     }
 
     const handleProgress = (e: any) => {
-        setState({...state, played: Number(e.played)})
-        if(isOperator)
-        sync(state.playing, Number(e.played))
+        console.log(e)
+        setState({...state, playedSec: Number(e.playedSeconds)})
+        if (isOperator)
+            sync(state.playing, Number(e.playedSeconds) + 0.0001)
     }
 
     const handleChangeProgress = (e: any) => {
-        refPlayer?.current?.seekTo(Number(e.target.value), "fraction")
-        setState({...state, played: Number(e.target.value)})
-        if(isOperator)
-        sync(state.playing, Number(e.target.value))
+        refPlayer?.current?.seekTo(Number(e.target.value), "seconds")
+        setState({...state, playedSec: Number(e.target.value)})
+        if (isOperator)
+            sync(state.playing, Number(e.target.value) + 0.0001)
     }
 
     const handleFullScreen = () => {
@@ -117,13 +121,14 @@ export const VideoTestPage = ({movieId, sync, isOperator, syncedTime, syncedPaus
     const playerButtonStyle = "fill-gray-100 h-4/5 bg-g"
 
     const playerFullScreenStyle = "fixed bottom-0 w-full p-4 bg-black"
-    const playerNotFullScreenStyle = "fixed bottom-0 w-3/4 p-4 bg-white"
+    const playerNotFullScreenStyle = "fixed bottom-0 w-3/5 p-4 bg-white"
 
     const ControlsVideo =
         <>
             <div className={isFullScreen ? playerFullScreenStyle : playerNotFullScreenStyle}>
                 <div className="flex items-center justify-between mt-2">
-                    <button onClick={handlePlay} className="text-2xl bg-white rounded mr-2">
+                    <button onClick={isOperator ? handlePlay : handleNothing}
+                            className="text-2xl bg-white rounded mr-2">
                         {playing ? <AiOutlinePauseCircle size={30}/> : <AiOutlinePlayCircle size={30}/>}
                     </button>
                     <input
@@ -138,12 +143,13 @@ export const VideoTestPage = ({movieId, sync, isOperator, syncedTime, syncedPaus
                     <input
                         type="range"
                         min="0"
-                        max="1"
-                        step="0.000001"
-                        value={played}
-                        onChange={handleChangeProgress}
+                        max={duration}
+                        step="1"
+                        value={playedSec}
+                        onChange={isOperator ? handleChangeProgress : handleNothing}
                         className="w-full mx-2"
                     />
+                    <h1>{Math.floor(state.playedSec) + "/" + Math.floor(duration) + "c"}</h1>
                     <button onClick={handleChangeQuality} className="text-darkBlue">
                         {state.listOfQualities[quality]}
                     </button>
@@ -156,12 +162,17 @@ export const VideoTestPage = ({movieId, sync, isOperator, syncedTime, syncedPaus
 
     return (
         <>
-            <div className="fixed left-0 w-3/4 ">
+            {movieId != 0 && (<div className="fixed left-0 w-3/5 ">
                 <div ref={containerRef}>
                     <ReactPlayer
                         onReady={() => wait(110).then(() => {
-                            refPlayer?.current?.seekTo(state.played, "fraction")
+                            if (isOperator)
+                                refPlayer?.current?.seekTo(state.playedSec, "seconds")
                         })}
+                        onDuration={() => {
+                            setDuration(refPlayer?.current?.getDuration() ? refPlayer?.current.getDuration() : 0)
+                        }}
+                        /*onEnded={playNext}*/
                         url={videoUrl}
                         controls={false}
                         width="100%"
@@ -171,9 +182,17 @@ export const VideoTestPage = ({movieId, sync, isOperator, syncedTime, syncedPaus
                         onProgress={handleProgress}
                         height="auto"
                     />
-                    {isOperator && ControlsVideo}
+                    {ControlsVideo}
                 </div>
-            </div>
+            </div>)
+            }
+            {
+                movieId == 0 && (
+                    <div>
+                        Видео не выбрано.
+                    </div>
+                )
+            }
         </>
     )
 }

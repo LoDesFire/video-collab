@@ -13,6 +13,7 @@ import {useNavigate} from "react-router-dom";
 import {getAllMovie} from "../../Services/MovieService";
 import {MovieDto} from "../../Models/MovieDto";
 import {VideoTestPage} from "../VideoTest/VideoTest";
+import {TestVideoRoom} from "../TestVideoRoom/TestVideoRoom";
 
 export const ChatTestPage = () => {
 
@@ -48,8 +49,10 @@ export const ChatTestPage = () => {
 
     const [syncedIsPlay, setSyncedIsPlay] = useState(false)
     const [syncedTime, setSyncedTime] = useState(0)
+    const [movieId, setMovieId] = useState(0)
 
     let [messageList, setMessageList] = useState<MessageModel[]>([])
+    let [movieIdList, setMovieIdList] = useState<number[]>([])
 
     let [mapOfUsername, setMapOfUsername] = useState(new Map<string, string>())
 
@@ -126,7 +129,6 @@ export const ChatTestPage = () => {
                                         registerUsername()
                                     },
                                     ondata: function (data: any) {
-                                        toast(data as string)
                                         JanusJS.debug("We got data from the DataChannel!", data);
                                         let json = JSON.parse(data);
                                         let what = json["textroom"]
@@ -149,20 +151,42 @@ export const ChatTestPage = () => {
                                                 setWhoIsOperator(undefined)
                                             if (json["operator_id"] != undefined)
                                                 setWhoIsOperator(json["operator_id"])
+                                            if(json["current_movie"])
+                                                if(json["current_movie"] != movieId) {
+                                                    setMovieId(json["current_movie"])
+                                                }
+                                            if(json["playlist"]) {
+                                                movieIdList = json["playlist"]
+                                                setMovieIdList(json["playlist"])
+                                            }
                                         } else if (what === "error") {
                                             if (json["error_code"] == 417) setCurrentPageState(stateOfPage.RoomNotExist)
                                             if (json["error_code"] == 419) setCurrentPageState(stateOfPage.RegisterUserError)
                                             if (json["error_code"] == 420) window.location.reload()
                                         } else if (what === "new_operator") {
                                             setWhoIsOperator(json["username"])
-                                        } else if (what === "sync") {
-                                            if(json["is_playing"] != undefined) {
+                                        }
+                                        else if (what === "sync") {
+                                            if (json["is_playing"] != undefined) {
                                                 setSyncedIsPlay(json["is_playing"])
                                             }
-                                            if(json["time"] != undefined) {
+                                            if (json["time"] != undefined) {
                                                 setSyncedTime(json["time"])
                                             }
-                                        } else {
+                                            if(json["current_movie"])
+                                                if(json["current_movie"] != movieId) {
+                                                    setMovieId(json["current_movie"])
+                                                }
+                                            if(json["playlist"]) {
+                                                movieIdList = json["playlist"]
+                                                setMovieIdList(json["playlist"])
+                                            }
+                                        }
+                                        else if (what === "destroyed") {
+                                            toast.info("Kicked")
+                                            leaveFromRoom()
+                                        }
+                                        else {
                                             if (what === "message") {
                                                 console.log("message")
                                                 type = MessageTypesEnum.message
@@ -282,17 +306,23 @@ export const ChatTestPage = () => {
             transaction: JanusJS.randomString(12),
             room: myRoom,
         };
-        textRoom.data({
-            data: JSON.stringify(message),
-            error: function (reason: string) {
-                toast.error(reason);
-            },
-            success: function () {
-                leaveRoom(myRoom).then(r => {
-                })
-                navigate("/profile")
-            }
-        });
+        try {
+            textRoom.data({
+                data: JSON.stringify(message),
+                error: function (reason: string) {
+                    toast.error(reason);
+                },
+                success: function () {
+                    leaveRoom(myRoom)
+                }
+            });
+        }  catch {} finally {
+            navigate("/profile")
+            localStorage.removeItem("roomid")
+            localStorage.removeItem("userRoomToken")
+            localStorage.removeItem("userOwnerId")
+        }
+
     }
 
     function registerUsername() {
@@ -318,7 +348,6 @@ export const ChatTestPage = () => {
             },
             success: function () {
                 setCurrentPageState(stateOfPage.Success)
-                toast.success("Register " + transaction)
             }
         });
     }
@@ -343,6 +372,68 @@ export const ChatTestPage = () => {
         }
     }
 
+    const selectMovieToPlay = (id: number) => {
+        setMovieId(id)
+        const myRoom = localStorage.getItem("roomid")
+        setSyncedIsPlay(false)
+        setSyncedTime(0.00000000001)
+        let message = {
+            textroom: "sync",
+            room: myRoom,
+            transaction: JanusJS.randomString(12),
+            is_playing: false,
+            time: 0.00000000001,
+            current_movie: id
+        };
+        console.log(JSON.stringify(message))
+        textRoom.data({
+            data: JSON.stringify(message),
+            error: function (reason: string) {
+                toast.error(reason);
+            }
+        });
+        setSyncedTime(0.1)
+    }
+
+    const onAddClicked = (id: number) => {
+        if (movieIdList.includes(id) == undefined) {
+        } else {
+            const list = [...movieIdList, id]
+            updateList(list)
+        }
+    }
+
+    const onRemoveClicked = (id: number) => {
+        const list = movieIdList.filter((it) => (it != id))
+        updateList(list)
+    }
+
+    const playNext = () => {
+        const list = movieIdList.filter((it) => (it != movieId))
+        setMovieId(list[0] != undefined ? list[0] : 0)
+        updateList(list)
+    }
+
+    const updateList = (new_list: number[]) => {
+        setMovieIdList(new_list)
+        movieIdList = new_list
+        const myRoom = localStorage.getItem("roomid")
+        let message = {
+            textroom: "sync",
+            room: myRoom,
+            transaction: JanusJS.randomString(12),
+            playlist: new_list,
+            current_movie: movieId
+        };
+        console.log(JSON.stringify(message))
+        textRoom.data({
+            data: JSON.stringify(message),
+            error: function (reason: string) {
+                toast.error(reason);
+            }
+        });
+    }
+
     const ConnectingElement = <div>
         <h1>Connecting...</h1>
     </div>
@@ -359,17 +450,25 @@ export const ChatTestPage = () => {
     </div>
 
     const successPage =
-        <div className="h-screen grid grid-cols-4">
+        <div className="h-screen grid grid-cols-5">
             <div className="col-span-3 flex flex-col items-center justify-center relative">
                 <div className="relative w-full">
                     <VideoTestPage
-                        movieId={1}
+                        movieId={movieId}
                         sync={syncVideo}
                         isOperator={myId == whoIsOperator}
                         syncedTime={syncedTime}
                         syncedPause={syncedIsPlay}
+                        playNext={playNext}
                     />
                 </div>
+            </div>
+            <div className="col-span-1 row-span-6 h-full bg-gray-100">
+                <TestVideoRoom
+                    roomId={localStorage.getItem("roomid") as string}
+                    token={localStorage.getItem("userRoomToken") as string}
+                    displayName={user?.username ? user.username : ""}
+                />
             </div>
             <div className="col-span-1 row-span-6 h-full bg-gray-100">
                 <Chat
@@ -382,6 +481,14 @@ export const ChatTestPage = () => {
                     myId={myId as string}
                     operatorId={whoIsOperator}
                     movieList={movieList}
+                    currentMovieId={movieId}
+                    playlistMoviesIds={movieIdList}
+                    playMovie={selectMovieToPlay}
+                    onAddClicked={onAddClicked}
+                    onRemoveClicked={onRemoveClicked}
+                    roomId={localStorage.getItem("roomid") as string}
+                    token={localStorage.getItem("userRoomToken") as string}
+                    name={user?.username ? user.username : ""}
                 />
             </div>
         </div>

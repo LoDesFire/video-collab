@@ -1,6 +1,4 @@
 import {RoomItemDto} from "../../Models/RoomItemDto";
-import {MovieCard} from "../MovieCard/MovieCard";
-import {number} from "yup";
 import {RoomCard} from "./RoomCard";
 
 interface Props {

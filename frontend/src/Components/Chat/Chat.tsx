@@ -6,13 +6,17 @@ import {
     AiOutlineSend,
     AiOutlineTeam,
     AiOutlineCloseCircle,
-    AiOutlineVideoCameraAdd
+    AiOutlineVideoCameraAdd, AiOutlineVideoCamera, AiOutlineCamera
 } from "react-icons/ai";
 import {toast} from "react-toastify";
 import {MembersElement} from "./MembersElement";
 import {MovieDto} from "../../Models/MovieDto";
-import {MoviesListElement} from "./MovieListElement";
+import {AddMoviesListElement} from "./MovieListElement";
 import {movieAddNew} from "../../Services/MovieService";
+import {Simulate} from "react-dom/test-utils";
+import playing = Simulate.playing;
+import {MoviesListElement} from "./AddMovieListElement";
+import {TestVideoRoom} from "../../Pages/TestVideoRoom/TestVideoRoom";
 
 type ChatProps = {
     messages: MessageModel[],
@@ -23,13 +27,23 @@ type ChatProps = {
     isOwner: boolean,
     operatorId: string | undefined,
     myId: string,
-    movieList: MovieDto[]
+    movieList: MovieDto[],
+    currentMovieId: number | undefined,
+    playlistMoviesIds: number[],
+    onAddClicked: (id: number) => void
+    onRemoveClicked: (id: number) => void
+    playMovie: (id: number) => void,
+    roomId: string,
+    token: string,
+    name: string
 }
 
 enum ChatStates {
     Chat,
     Members,
-    Movies
+    Movies,
+    SetMovies,
+    VideoRoom
 }
 
 export const Chat = ({
@@ -41,7 +55,15 @@ export const Chat = ({
                          isOwner,
                          operatorId,
                          myId,
-                         movieList
+                         movieList,
+                         playMovie,
+                         currentMovieId,
+                         playlistMoviesIds,
+                         onAddClicked,
+                         onRemoveClicked,
+                         roomId,
+                         token,
+                         name
                      }: ChatProps) => {
 
     const [input, setInput] = useState<string>('');
@@ -56,7 +78,7 @@ export const Chat = ({
     }
 
     useEffect(() => {
-        if (!isOwner && myId != operatorId && currentChatState == ChatStates.Movies) {
+        if (myId != operatorId && currentChatState == ChatStates.SetMovies) {
             setCurrentChatState(ChatStates.Chat)
         }
     }, [operatorId]);
@@ -88,6 +110,14 @@ export const Chat = ({
 
     const handleShowMovies = () => {
         setCurrentChatState(currentChatState != ChatStates.Movies ? ChatStates.Movies : ChatStates.Chat)
+    }
+
+    const handleShowVideoRoom = () => {
+        setCurrentChatState(currentChatState != ChatStates.VideoRoom ? ChatStates.VideoRoom : ChatStates.Chat)
+    }
+
+    const handleShowAddMovies = () => {
+        setCurrentChatState(currentChatState != ChatStates.SetMovies ? ChatStates.SetMovies : ChatStates.Chat)
     }
 
     useEffect(() => {
@@ -141,7 +171,21 @@ export const Chat = ({
                         operatorId={operatorId}/>
                 )
             }
-            {currentChatState == ChatStates.Movies && <MoviesListElement movieList={movieList}/>}
+            {currentChatState == ChatStates.SetMovies && <AddMoviesListElement
+                movieList={movieList}
+                currentMovieId={currentMovieId}
+                onRemoveClicked={onRemoveClicked}
+                onAddClicked={onAddClicked}
+                playlistMoviesIds={playlistMoviesIds}
+                isOperator={operatorId == myId}
+            />}
+            {currentChatState == ChatStates.Movies && <MoviesListElement
+                movieList={movieList}
+                playMovie={playMovie}
+                currentMovieId={currentMovieId}
+                isOperator={operatorId == myId}
+                playlistMoviesIds={playlistMoviesIds}
+            />}
             <div className="p-4 bg-gray-100 border-t flex ">
                 <button
                     onClick={handleCopyLink}
@@ -155,16 +199,24 @@ export const Chat = ({
                         (currentChatState == ChatStates.Members ? "bg-green-400 rounded" : "")}>
                     <AiOutlineTeam size={24}/>
                 </button>
-                {(operatorId == myId || isOwner) && (
-                    <button
-                        onClick={handleShowMovies}
-                        className={
-                            "ml-2 mr-2 p-1 rounded hover:bg-gray-0 " +
-                            (currentChatState == ChatStates.Movies ? "bg-green-400 rounded" : "")}>
-                        <AiOutlineVideoCameraAdd size={24}/>
-                    </button>
-                )
+                {
+                    (operatorId == myId) && (
+                        <button
+                            onClick={handleShowAddMovies}
+                            className={
+                                "ml-2 mr-2 p-1 rounded hover:bg-gray-0 " +
+                                (currentChatState == ChatStates.SetMovies ? "bg-green-400 rounded" : "")}>
+                            <AiOutlineVideoCameraAdd size={24}/>
+                        </button>
+                    )
                 }
+                <button
+                    onClick={handleShowMovies}
+                    className={
+                        "ml-2 mr-2 p-1 rounded hover:bg-gray-0 " +
+                        (currentChatState == ChatStates.Movies ? "bg-green-400 rounded" : "")}>
+                    <AiOutlineVideoCamera size={24}/>
+                </button>
                 <button
                     onClick={handleLeavePage}
                     className="ml-2 mr-2 p-1 rounded hover:bg-gray-0">
