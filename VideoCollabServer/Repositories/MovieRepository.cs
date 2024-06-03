@@ -21,7 +21,7 @@ public class MovieRepository(ApplicationContext context, ILinkRepository linkRep
             .FirstOrDefaultAsync(m => m.Id == movieId);
         if (movie == null)
             return;
-        
+
         movie.Links.Clear();
         movie.Files.Clear();
         Context.Movies.Remove(movie);
@@ -92,6 +92,17 @@ public class MovieRepository(ApplicationContext context, ILinkRepository linkRep
                 Id = movie.Id
             }
         };
+    }
+
+    public async Task<Result<MoviePageDto>> MovieById(int movieId)
+    {
+        var movie = await Context.Movies
+            .Include(m => m.Links)
+            .FirstOrDefaultAsync(m => m.Id == movieId);
+
+        return movie == null
+            ? Result<MoviePageDto>.Error("Movie doesn't exists")
+            : Result<MoviePageDto>.Ok(movie.ToMoviePageDto());
     }
 
     public async Task<bool> ContainsMovieAsync(int movieId)

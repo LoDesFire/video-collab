@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
@@ -15,7 +16,7 @@ public class MovieController(
     IMovieRepository repository,
     IHlsService hlsService,
     ITranscodingMovieRepository transcodingMovieRepository)
-    : ControllerBase // TODO: Movie Status handler
+    : ControllerBase
 {
     [HttpGet("all")]
     public async Task<IActionResult> GetAllMovies()
@@ -23,17 +24,28 @@ public class MovieController(
         var moviesResult = await repository.ReadyToViewMoviesAsync();
         return !moviesResult.Succeeded ? StatusCode(500, "Internal Server Error") : Ok(moviesResult.Value);
     }
-    
+
+
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> GetMovie([FromQuery] int movieId)
+    {
+        var moviesResult = await repository.MovieById(movieId);
+        return !moviesResult.Succeeded ? BadRequest(moviesResult.Errors) : Ok(moviesResult.Value);
+    }
+
     [HttpDelete]
-    public async Task<IActionResult> DeleteMovie([FromQuery][Required] int movieId)
+    [Authorize]
+    public async Task<IActionResult> DeleteMovie([FromQuery] [Required] int movieId)
     {
         await repository.DeleteMovieAsync(movieId);
         hlsService.DeleteMovie(movieId);
 
         return Ok();
     }
-    
+
     [HttpPost]
+    [Authorize]
     public async Task<IActionResult> AddMovie([FromBody] CreateMovieDto createMovieDto)
     {
         if (!ModelState.IsValid)
@@ -46,6 +58,7 @@ public class MovieController(
         return Ok(createdMovie.Value);
     }
 
+    [Authorize]
     [HttpPost("upload")]
     [RequestSizeLimit(1024 * 1024 * 1024)]
     public async Task<IActionResult> UploadMovie([FromQuery] [Required] int movieId, [Required] IFormFile file)
@@ -60,6 +73,7 @@ public class MovieController(
     }
 
     [HttpGet("watch/{movieId:int}/.m3u8")]
+    [Authorize]
     public IActionResult Watch([FromRoute] int movieId)
     {
         var playlist = hlsService.GetPlaylistByMovieId(movieId);
@@ -72,6 +86,7 @@ public class MovieController(
     }
 
     [HttpGet("watch/{movieId:int}/{quality}/{file}")]
+    [Authorize]
     public IActionResult WatchFile([FromRoute] int movieId, string quality, string file)
     {
         var hlsFile = hlsService.GetHlsFile(movieId, quality, file);
