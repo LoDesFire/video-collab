@@ -6,17 +6,15 @@ import {
     AiOutlineSend,
     AiOutlineTeam,
     AiOutlineCloseCircle,
-    AiOutlineVideoCameraAdd, AiOutlineVideoCamera, AiOutlineCamera
+    AiOutlineVideoCameraAdd, AiOutlineVideoCamera
 } from "react-icons/ai";
 import {toast} from "react-toastify";
 import {MembersElement} from "./MembersElement";
 import {MovieDto} from "../../Models/MovieDto";
 import {AddMoviesListElement} from "./MovieListElement";
-import {movieAddNew} from "../../Services/MovieService";
-import {Simulate} from "react-dom/test-utils";
-import playing = Simulate.playing;
 import {MoviesListElement} from "./AddMovieListElement";
-import {TestVideoRoom} from "../../Pages/TestVideoRoom/TestVideoRoom";
+import {ReactComponent as Playlist} from "./icons/playlist.svg";
+import {ReactComponent as SelectVideo} from "./icons/add-video.svg";
 
 type ChatProps = {
     messages: MessageModel[],
@@ -206,7 +204,7 @@ export const Chat = ({
                             className={
                                 "ml-2 mr-2 p-1 rounded hover:bg-gray-0 " +
                                 (currentChatState == ChatStates.SetMovies ? "bg-green-400 rounded" : "")}>
-                            <AiOutlineVideoCameraAdd size={24}/>
+                            <SelectVideo/>
                         </button>
                     )
                 }
@@ -215,7 +213,7 @@ export const Chat = ({
                     className={
                         "ml-2 mr-2 p-1 rounded hover:bg-gray-0 " +
                         (currentChatState == ChatStates.Movies ? "bg-green-400 rounded" : "")}>
-                    <AiOutlineVideoCamera size={24}/>
+                    <Playlist/>
                 </button>
                 <button
                     onClick={handleLeavePage}

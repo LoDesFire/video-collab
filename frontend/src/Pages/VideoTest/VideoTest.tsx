@@ -162,29 +162,31 @@ export const VideoTestPage = ({movieId, sync, isOperator, syncedTime, syncedPaus
 
     return (
         <>
-            {movieId != 0 && (<div className="fixed left-0 w-3/5 ">
-                <div ref={containerRef}>
-                    <ReactPlayer
-                        onReady={() => wait(110).then(() => {
-                            if (isOperator)
-                                refPlayer?.current?.seekTo(state.playedSec, "seconds")
-                        })}
-                        onDuration={() => {
-                            setDuration(refPlayer?.current?.getDuration() ? refPlayer?.current.getDuration() : 0)
-                        }}
-                        /*onEnded={playNext}*/
-                        url={videoUrl}
-                        controls={false}
-                        width="100%"
-                        playing={playing}
-                        volume={volume}
-                        ref={refPlayer}
-                        onProgress={handleProgress}
-                        height="auto"
-                    />
-                    {ControlsVideo}
+            {movieId != 0 && (
+                <div className="fixed left-0 w-3/5 ">
+                    <div ref={containerRef}>
+                        <ReactPlayer
+                            onReady={() => wait(110).then(() => {
+                                if (isOperator)
+                                    refPlayer?.current?.seekTo(state.playedSec, "seconds")
+                            })}
+                            onDuration={() => {
+                                setDuration(refPlayer?.current?.getDuration() ? refPlayer?.current.getDuration() : 0)
+                            }}
+                            /*onEnded={playNext}*/
+                            url={videoUrl}
+                            controls={false}
+                            width="100%"
+                            playing={playing}
+                            volume={volume}
+                            ref={refPlayer}
+                            onProgress={handleProgress}
+                            height="auto"
+                        />
+                        {ControlsVideo}
+                    </div>
                 </div>
-            </div>)
+            )
             }
             {
                 movieId == 0 && (

@@ -1,13 +1,15 @@
-import {createVideoRoomClient} from "janus-simple-videoroom-client"
-import React, {useState, useEffect, useRef} from 'react';
-import {toast} from "react-toastify";
+import {createVideoRoomClient} from "janus-simple-videoroom-client";
+import React, {useState, useEffect} from 'react';
 import {JanusServerWS} from "../../Constants";
-
-interface DisplayProps {
-    displayName: string;
-}
+import {AiOutlineAudio, AiOutlineAudioMuted} from "react-icons/ai";
+import {ReactComponent as VideoMuted} from './icons/video-muted.svg';
+import {ReactComponent as VideoNotMuted} from './icons/video-not-muted.svg';
+import {ReactComponent as MicroMuted} from './icons/microphone-muted.svg';
+import {ReactComponent as MicroNotMuted} from './icons/microphone-not-muted.svg';
 
 const makeDisplay = (displayName: string, isMe: boolean) => {
+    console.log("Make Display, Is Me? : " + isMe)
+
     const stream = new MediaStream();
     const displayElement = document.createElement('div');
     displayElement.className = 'display relative inline-block m-4';
@@ -19,11 +21,30 @@ const makeDisplay = (displayName: string, isMe: boolean) => {
     const videoElement = document.createElement('video');
     videoElement.autoplay = true;
     videoElement.srcObject = stream;
-    videoElement.muted = isMe
+    videoElement.muted = isMe;
 
     displayElement.appendChild(nameElement);
     displayElement.appendChild(videoElement);
-    document.getElementById('displays')?.appendChild(displayElement);
+    if (isMe) {
+        const div = document.getElementById('display')
+        while (div?.firstChild) {
+            div.removeChild(div.firstChild);
+        }
+        console.log(`My video removed`)
+        div?.appendChild(displayElement)
+        console.log(`My video added`)
+    } else {
+        const div = document.getElementById('displays')
+        div?.childNodes.forEach((child) => {
+            if (child?.firstChild?.textContent == displayName) {
+                console.log(`${displayName} removed`)
+                div.removeChild(child);
+            }
+        })
+        document.getElementById('displays')?.appendChild(displayElement)
+        console.log(`${displayName} added`)
+
+    }
 
     return {
         stream: stream,
@@ -40,10 +61,11 @@ interface TestVideoRoomProps {
 export const TestVideoRoom = ({roomId, displayName, token}: TestVideoRoomProps) => {
     const [server, setServer] = useState(JanusServerWS);
     const [clientReady, setClientReady] = useState<any>(null);
-    const [connection, setConnection] = useState<any>(null);
+    let [room, setRoom] = useState<any>(null);
+    let [pub, setPub] = useState<any>(null);
 
-    let [listOfJoined, setListOfJoined] = useState<any[]>([])
-    let [mapOfId, setMapOfId] = useState(new Map<string, string>)
+    const [isMuted, setIsMuted] = useState(false);
+    const [isCameraOff, setIsCameraOff] = useState(false);
 
     useEffect(() => {
         const client = createVideoRoomClient({debug: true});
@@ -51,76 +73,98 @@ export const TestVideoRoom = ({roomId, displayName, token}: TestVideoRoomProps) 
     }, []);
 
     useEffect(() => {
-        connect(server, roomId, displayName, token)
+        if (clientReady) {
+            connect(server, roomId, displayName, token);
+        }
     }, [clientReady]);
+
+    useEffect(() => {
+        if (pub) {
+            console.log(`Something change: Camera off: ${isCameraOff}, Muted? : ${isMuted}`)
+            pub.muteMyVideo(isCameraOff)
+            pub.muteMyAudio(isMuted)
+        }
+    }, [isCameraOff, isMuted]);
 
     const connect = async (server: string, roomId: string, displayName: string, token: string) => {
         if (!clientReady) return;
 
         const client = await clientReady;
         const session = await client.createSession(server);
-        const room = await session.joinRoom(roomId, token);
+        const t_room = await session.joinRoom(roomId, token);
+        room = t_room
 
-        if (!listOfJoined.includes(displayName)) {
-            const pub = await room.publish({
-                publishOptions: {
-                    display: displayName,
-                },
-                mediaOptions: {
-                    tracks: [
-                        {type: "audio", capture: true},
-                        {type: "video", capture: "lowres"}
-                    ]
-                }
-            });
+        setRoom(t_room)
 
-            const myVideo = makeDisplay(displayName, true);
-            let tmp = [...listOfJoined, displayName]
-            setListOfJoined(tmp)
-            listOfJoined = tmp
-            pub.onTrackAdded((track: MediaStreamTrack) => myVideo.stream.addTrack(track));
-            pub.onTrackRemoved((track: MediaStreamTrack) => myVideo.stream.removeTrack(track));
+        await my_connect()
 
-            const subs: any = {};
-            room.onPublisherAdded((publishers: any[]) => publishers.forEach((publisher: any) => subscribe(publisher, room, subs)));
-            room.onPublisherRemoved((publisherId: any) => unsubscribe(publisherId, subs));
-
-            setConnection({session, room, publisher: pub, subscribers: subs});
-        }
+        const subs: any = {};
+        room.onPublisherAdded((publishers: any[]) => publishers.forEach((publisher: any) => subscribe(publisher, room, subs)));
+        room.onPublisherRemoved((publisherId: any) => unsubscribe(publisherId, subs));
     };
 
+    const my_connect = async () => {
+        console.log(`Is muted: ${isMuted}`)
+        let tracks: any[] = [
+            {type: "audio", capture: !isMuted},
+            {type: "video", capture: !isCameraOff}
+        ]
+        const tpub = await room.publish({
+            publishOptions: {
+                display: displayName,
+            },
+            mediaOptions: {
+                tracks: tracks
+            }
+        })
+        console.log(tpub)
+        setPub(tpub)
+        pub = tpub
+        const myVideo = makeDisplay(displayName, true);
+        tpub.onTrackAdded((track: MediaStreamTrack) => myVideo.stream.addTrack(track));
+        tpub.onTrackRemoved((track: MediaStreamTrack) => myVideo.stream.removeTrack(track));
+    }
+
     const subscribe = async (publisher: any, room: any, subs: any) => {
-        console.log(listOfJoined + "|||||")
-        if (!listOfJoined.includes(publisher.display)) {
-            let tmpMap = mapOfId
-            tmpMap.set(publisher.id, publisher.display)
-            mapOfId = tmpMap
-            setMapOfId(tmpMap)
-            const sub = subs[publisher.id] = await room.subscribe([{feed: publisher.id}]);
-            sub.video = makeDisplay(publisher.display, false);
-            sub.onTrackAdded((track: MediaStreamTrack) => sub.video.stream.addTrack(track));
-            sub.onTrackRemoved((track: MediaStreamTrack) => sub.video.stream.removeTrack(track));
-            let tmp = [...listOfJoined, publisher.display]
-            setListOfJoined(tmp)
-            listOfJoined = tmp
-        }
+        console.log(`New subscriber: ${publisher.id} ${publisher.display}`)
+        const sub = subs[publisher.id] = await room.subscribe([{feed: publisher.id}]);
+        sub.video = makeDisplay(publisher.display, false);
+        sub.onTrackAdded((track: MediaStreamTrack) => sub.video.stream.addTrack(track));
+        sub.onTrackRemoved((track: MediaStreamTrack) => sub.video.stream.removeTrack(track));
     };
 
     const unsubscribe = async (publisherId: string, subs: any) => {
+        console.log(`Remove subscriber: ${publisherId}`)
         await subs[publisherId].unsubscribe();
         subs[publisherId].video.remove();
-        setListOfJoined(listOfJoined.filter((it) => (mapOfId.get(publisherId) != it)))
-        listOfJoined = listOfJoined.filter((it) => (mapOfId.get(publisherId) != it))
     };
 
-    useEffect(() => {
-        connect(server, roomId, displayName, token)
-            .then(() => document.getElementById('main-form')?.classList.add('hidden'))
-            .catch(console.error);
-    }, []);
+    const leave = () => {
+        pub.unpublish()
+        console.log(`Unpublished`)
+    }
+
+    const toggleMute = () => {
+        console.log(pub)
+        setIsMuted(!isMuted);
+    };
+
+
+    const toggleCamera = () => {
+        setIsCameraOff(!isCameraOff);
+    };
 
     return (
         <div>
+            <div id="display" className="flex flex-col p-4 space-y-4"></div>
+            <div>
+                <button className="pl-10" onClick={toggleMute}>
+                    {isMuted ? <MicroMuted /> : <MicroNotMuted />}
+                </button>
+                <button className="pl-5" onClick={toggleCamera}>
+                    {isCameraOff ? <VideoMuted/> : <VideoNotMuted/>}
+                </button>
+            </div>
             <div id="displays" className="flex flex-col p-4 space-y-4"></div>
         </div>
     );

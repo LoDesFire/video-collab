@@ -1,7 +1,14 @@
 import {MovieDto} from "../../Models/MovieDto";
 import React, {useEffect, useState} from "react";
 import {Link, useNavigate} from "react-router-dom";
-import {AiFillCamera, AiFillStar, AiFillVideoCamera, AiOutlineVideoCameraAdd, AiTwotoneStar} from 'react-icons/ai';
+import {
+    AiFillCamera,
+    AiFillStar,
+    AiFillVideoCamera,
+    AiOutlineCamera,
+    AiOutlineVideoCameraAdd,
+    AiTwotoneStar
+} from 'react-icons/ai';
 
 interface Props {
     movie: MovieDto;
@@ -40,7 +47,7 @@ export const MovieCardForRoom = ({
                     {movie.name}
                 </h2>
                 <div className="flex w-full justify-between">
-                    {(
+                    {!playMovie && (
                         !isAdded ? (
                             <AiOutlineVideoCameraAdd size={30}
                                                      className="fill-green-700 hover:fill-green-600"
@@ -53,10 +60,11 @@ export const MovieCardForRoom = ({
                                           onClick={() => {
                                               removeMovie(movie.id)
                                           }}/>
-                        ))
+                        )
+                    )
                     }
                 </div>
-                {isOperator && playMovie && !isCurrentMovie && <button onClick={handleWatch}>Watch</button>}
+                {isOperator && playMovie && !isCurrentMovie && <button onClick={handleWatch}><AiOutlineCamera size={24}/></button>}
 
             </div>
         </div>
