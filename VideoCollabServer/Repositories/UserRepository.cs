@@ -19,6 +19,8 @@ public class UserRepository(ApplicationContext context, IAuthService authService
             .ThenInclude(m => m.Links)
             .Include(u => u.OwnedRooms)
             .ThenInclude(r => r.Playlist)
+            .Include(u => u.OwnedRooms)
+            .ThenInclude(r => r.JoinedUsers)
             .FirstAsync(u => u.Id == id);
 
         return user.ToProfileDto();

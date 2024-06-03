@@ -28,8 +28,9 @@ key_frames_interval=${key_frames_interval%.*} # truncate to integer
 precmd_static="-c:v h264 -profile:v main -crf 20 -sc_threshold 0"
 precmd_static+=" -g ${key_frames_interval} -keyint_min ${key_frames_interval}"
 
-postcmd=" -hls_flags single_file -hls_playlist_type vod -master_pl_name master.m3u8"
-postcmd+=" -hls_segment_filename ${target}/qual%v/mov.ts ${target}/qual%v/index.m3u8"
+#postcmd=" -hls_flags single_file -hls_playlist_type vod -master_pl_name master.m3u8"
+postcmd=" -hls_playlist_type vod -master_pl_name master.m3u8"
+postcmd+=" -hls_segment_filename ${target}/qual%v/mov_%03d.ts ${target}/qual%v/index.m3u8"
 
 # misc params
 misc_params="-hide_banner -y"

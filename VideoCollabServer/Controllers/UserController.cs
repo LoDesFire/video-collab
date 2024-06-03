@@ -8,15 +8,8 @@ namespace VideoCollabServer.Controllers;
 
 [Route("api/user")]
 [ApiController]
-public class UserController : ControllerBase
+public class UserController(IUserRepository repository) : ControllerBase
 {
-    private readonly IUserRepository _repository;
-
-    public UserController(IUserRepository repository)
-    {
-        _repository = repository;
-    }
-
     [Authorize]
     [HttpGet("profile")]
     public async Task<IActionResult> GetUserProfile()
@@ -24,7 +17,7 @@ public class UserController : ControllerBase
         var identity = HttpContext.User.Identity as ClaimsIdentity;
         var id = identity!.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")!.Value;
         
-        var profileDto = await _repository.GetByIdAsync(id);
+        var profileDto = await repository.GetByIdAsync(id);
         return Ok(profileDto);
     }
     
@@ -35,7 +28,7 @@ public class UserController : ControllerBase
         var identity = HttpContext.User.Identity as ClaimsIdentity;
         var id = identity!.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")!.Value;
 
-        var result = await _repository.PinMovieAsync(id, movieId);
+        var result = await repository.PinMovieAsync(id, movieId);
         return result ? Ok() : BadRequest(new List<string> {"This movie doesn't exist"});
     }
     
@@ -46,7 +39,7 @@ public class UserController : ControllerBase
         var identity = HttpContext.User.Identity as ClaimsIdentity;
         var id = identity!.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")!.Value;
 
-        var result = await _repository.UnpinMovieAsync(id, movieId);
+        var result = await repository.UnpinMovieAsync(id, movieId);
         return result ? Ok() : BadRequest(new List<string> {"This movie is already unpinned"});
     }
 }
