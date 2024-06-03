@@ -73,7 +73,6 @@ public class MovieController(
     }
 
     [HttpGet("watch/{movieId:int}/.m3u8")]
-    [Authorize]
     public IActionResult Watch([FromRoute] int movieId)
     {
         var playlist = hlsService.GetPlaylistByMovieId(movieId);
@@ -86,7 +85,6 @@ public class MovieController(
     }
 
     [HttpGet("watch/{movieId:int}/{quality}/{file}")]
-    [Authorize]
     public IActionResult WatchFile([FromRoute] int movieId, string quality, string file)
     {
         var hlsFile = hlsService.GetHlsFile(movieId, quality, file);
