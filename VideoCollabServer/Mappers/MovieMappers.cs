@@ -24,6 +24,18 @@ public static class MovieMappers
             Name = movieModel.Name
         };
     }
+    
+    public static MovieItemDto ToItemDto(this Movie movieModel, User user)
+    {
+        return new MovieItemDto
+        {
+            Id = movieModel.Id,
+            Description = movieModel.Description,
+            ImageUrl = movieModel.Links.Find(l => l.Type == LinkType.Image && l.Movie?.Id == movieModel.Id)?.Url,
+            Name = movieModel.Name,
+            Pinned = movieModel.UsersPinnedMovie.Contains(user)
+        };
+    }
 
     public static MoviePageDto ToMoviePageDto(this Movie movieModel)
     {

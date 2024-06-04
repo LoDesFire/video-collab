@@ -17,13 +17,11 @@ public class MovieRepository(ApplicationContext context, ILinkRepository linkRep
     {
         var movie = await Context.Movies
             .Include(m => m.Links)
-            .Include(m => m.Files)
             .FirstOrDefaultAsync(m => m.Id == movieId);
         if (movie == null)
             return;
 
         movie.Links.Clear();
-        movie.Files.Clear();
         Context.Movies.Remove(movie);
 
         await Context.SaveChangesAsync();
@@ -110,14 +108,18 @@ public class MovieRepository(ApplicationContext context, ILinkRepository linkRep
         return await Context.Movies.FirstOrDefaultAsync(m => m.Id == movieId) != null;
     }
 
-    public async Task<Result<IEnumerable<PinnedMovieDto>>> ReadyToViewMoviesAsync()
+    public async Task<Result<IEnumerable<MovieItemDto>>> ReadyToViewMoviesAsync(string userId)
     {
-        return Result<IEnumerable<PinnedMovieDto>>.Ok(
-            await Context.Movies
+        var user = await Context.Users.FirstAsync(u => u.Id == userId);
+        return Result<IEnumerable<MovieItemDto>>.Ok(
+            (await Context.Movies
                 .Include(m => m.Links)
+                .Include(m => m.UsersPinnedMovie)
                 .Where(m => m.Status == Movie.Statuses.ReadyToView)
-                .Select(m => m.ToPinnedDto())
-                .ToListAsync()
+                .Select(m => m.ToItemDto(user))
+                .ToListAsync())
+            .OrderByDescending(m => m.Pinned)
+            .ToList()
         );
     }
 }

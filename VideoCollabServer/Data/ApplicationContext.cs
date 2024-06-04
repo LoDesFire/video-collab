@@ -1,14 +1,12 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using VideoCollabServer.Models;
-using File = VideoCollabServer.Models.File;
 
 
 namespace VideoCollabServer.Data;
 
 public sealed class ApplicationContext : IdentityDbContext<User>
 {
-    public DbSet<File> Files { get; set; } = null!;
     public DbSet<Link> Links { get; set; } = null!;
     public DbSet<Movie> Movies { get; set; } = null!;
     public DbSet<Room> Rooms { get; set; } = null!;

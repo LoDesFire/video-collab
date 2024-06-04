@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using VideoCollabServer.Data;
 using VideoCollabServer.Dtos;
 using VideoCollabServer.Interfaces;
@@ -11,11 +12,11 @@ public class TranscodingMovieRepository(ApplicationContext context): ITranscodin
     
     public async Task<Result> ChangeMovieStatusAsync(int movieId, Movie.Statuses status)
     {
-        var movie = await Context.Movies.FindAsync(movieId);
+        var movie = await Context.Movies.FirstOrDefaultAsync(m => m.Id == movieId);
     
         if (movie is null)
             return Result.Error("There is no such movie");
-
+        
         movie.Status = status;
 
         await Context.SaveChangesAsync();

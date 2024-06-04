@@ -4,8 +4,6 @@ public enum LinkType
 {
     Image,
     Trailer,
-    Film,
-    Room
 }
 
 public class Link

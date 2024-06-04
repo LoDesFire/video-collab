@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
@@ -19,9 +20,13 @@ public class MovieController(
     : ControllerBase
 {
     [HttpGet("all")]
+    [Authorize]
     public async Task<IActionResult> GetAllMovies()
     {
-        var moviesResult = await repository.ReadyToViewMoviesAsync();
+        var identity = HttpContext.User.Identity as ClaimsIdentity;
+        var id = identity!.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")!.Value;
+        
+        var moviesResult = await repository.ReadyToViewMoviesAsync(id);
         return !moviesResult.Succeeded ? StatusCode(500, "Internal Server Error") : Ok(moviesResult.Value);
     }
 
