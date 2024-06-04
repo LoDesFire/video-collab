@@ -1,0 +1,15 @@
+namespace VideoCollab.Core.Domain.Models;
+
+public enum LinkType
+{
+    Image,
+    Trailer,
+}
+
+public class Link
+{
+    public int Id { get; set; }
+    public string Url { get; set; } = null!;
+    public LinkType Type { get; set; }
+    public Movie? Movie { get; set; }
+}

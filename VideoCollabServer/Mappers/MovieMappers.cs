@@ -1,5 +1,5 @@
+using VideoCollab.Core.Domain.Models;
 using VideoCollabServer.Dtos.Movie;
-using VideoCollabServer.Models;
 
 namespace VideoCollabServer.Mappers;
 
@@ -25,7 +25,7 @@ public static class MovieMappers
         };
     }
     
-    public static MovieItemDto ToItemDto(this Movie movieModel, User user)
+    public static MovieItemDto ToItemDto(this Movie movieModel, string userId)
     {
         return new MovieItemDto
         {
@@ -33,7 +33,7 @@ public static class MovieMappers
             Description = movieModel.Description,
             ImageUrl = movieModel.Links.Find(l => l.Type == LinkType.Image && l.Movie?.Id == movieModel.Id)?.Url,
             Name = movieModel.Name,
-            Pinned = movieModel.UsersPinnedMovie.Contains(user)
+            Pinned = movieModel.UsersPinnedMovie.Select(u => u.Id).Contains(userId)
         };
     }
 

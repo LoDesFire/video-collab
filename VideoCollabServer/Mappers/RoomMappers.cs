@@ -1,6 +1,5 @@
-using VideoCollabServer.Data;
+using VideoCollab.Core.Domain.Models;
 using VideoCollabServer.Dtos.Room;
-using VideoCollabServer.Models;
 
 namespace VideoCollabServer.Mappers;
 

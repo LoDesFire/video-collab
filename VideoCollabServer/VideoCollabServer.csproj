@@ -36,9 +36,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="uploads\frames\" />
-      <Folder Include="uploads\hls" />
-      <Folder Include="uploads\raw" />
+      <ProjectReference Include="..\VideoCollab.Core\VideoCollab.Core.csproj" />
+      <ProjectReference Include="..\VideoCollab.Persistence\VideoCollab.Persistence.csproj" />
     </ItemGroup>
 
 </Project>

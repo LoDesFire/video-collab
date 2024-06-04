@@ -1,13 +1,15 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VideoCollabServer.Interfaces;
+using VideoCollab.Core.Domain.Abstractions;
+using VideoCollabServer.Dtos.Room;
+using VideoCollabServer.Dtos.User;
 
 namespace VideoCollabServer.Controllers;
 
 [Route("api/room")]
 [ApiController]
-public class RoomController(IRoomRepository roomRepository): ControllerBase
+public class RoomController(IRoomService roomService) : ControllerBase
 {
     [HttpPost]
     [Authorize]
@@ -15,49 +17,71 @@ public class RoomController(IRoomRepository roomRepository): ControllerBase
     {
         var identity = HttpContext.User.Identity as ClaimsIdentity;
         var id = identity!.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")!.Value;
-        
-        var r= await roomRepository.CreateRoomAsync(id, @private);
+
+        var r = await roomService.CreateRoomAsync(id, @private);
         if (!r.Succeeded)
             return BadRequest(r.Errors);
-        
-        return Ok(r.Value);
+
+        var (roomId, (userId, username, textRoomToken)) = r.Value;
+
+        return Ok(
+            new CreatedRoomDto
+            {
+                Id = roomId,
+                Owner = new JoinedUserDto
+                {
+                    Id = userId,
+                    TextroomToken = textRoomToken,
+                    Username = username
+                },
+            }
+        );
     }
-    
+
     [HttpGet("join")]
     [Authorize]
     public async Task<IActionResult> AllowToken([FromQuery] string roomId)
     {
         var identity = HttpContext.User.Identity as ClaimsIdentity;
         var id = identity!.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")!.Value;
-        
-        var r= await roomRepository.JoinTheRoomAsync(id, roomId);
+
+        var r = await roomService.JoinTheRoomAsync(id, roomId);
         if (!r.Succeeded)
             return BadRequest(r.Errors);
-        
-        return Ok(r.Value);
+
+        var (userId, username, textRoomToken) = r.Value;
+
+        return Ok(
+            new JoinedUserDto
+            {
+                Id = userId,
+                TextroomToken = textRoomToken,
+                Username = username
+            }
+        );
     }
-    
+
     [HttpGet("leave")]
     [Authorize]
     public async Task<IActionResult> LeaveTheRoom([FromQuery] string roomId)
     {
         var identity = HttpContext.User.Identity as ClaimsIdentity;
         var id = identity!.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")!.Value;
-        
-        await roomRepository.LeaveFromRoom(id, roomId);
-        
+
+        await roomService.LeaveFromRoom(id, roomId);
+
         return Ok();
     }
-    
+
     [HttpDelete]
     [Authorize]
     public async Task<IActionResult> DestroyRoom([FromQuery] string roomId)
     {
-        var identity = HttpContext.User.Identity as ClaimsIdentity; 
+        var identity = HttpContext.User.Identity as ClaimsIdentity;
         var id = identity!.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")!.Value;
-        
-        await roomRepository.DeleteRoomAsync(id, roomId);
-        
+
+        await roomService.DeleteRoomAsync(id, roomId);
+
         return Ok();
     }
 }

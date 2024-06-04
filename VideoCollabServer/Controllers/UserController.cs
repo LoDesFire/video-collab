@@ -2,13 +2,14 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VideoCollabServer.Interfaces;
+using VideoCollab.Core.Domain.Abstractions;
+using VideoCollabServer.Mappers;
 
 namespace VideoCollabServer.Controllers;
 
 [Route("api/user")]
 [ApiController]
-public class UserController(IUserRepository repository) : ControllerBase
+public class UserController(IUserService userService) : ControllerBase
 {
     [Authorize]
     [HttpGet("profile")]
@@ -17,8 +18,8 @@ public class UserController(IUserRepository repository) : ControllerBase
         var identity = HttpContext.User.Identity as ClaimsIdentity;
         var id = identity!.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")!.Value;
         
-        var profileDto = await repository.GetByIdAsync(id);
-        return Ok(profileDto);
+        var user = await userService.GetByIdAsync(id);
+        return Ok(user!.ToProfileDto());
     }
     
     [Authorize]
@@ -28,7 +29,7 @@ public class UserController(IUserRepository repository) : ControllerBase
         var identity = HttpContext.User.Identity as ClaimsIdentity;
         var id = identity!.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")!.Value;
 
-        var result = await repository.PinMovieAsync(id, movieId);
+        var result = await userService.PinMovieAsync(id, movieId);
         return result ? Ok() : BadRequest(new List<string> {"This movie doesn't exist"});
     }
     
@@ -39,7 +40,7 @@ public class UserController(IUserRepository repository) : ControllerBase
         var identity = HttpContext.User.Identity as ClaimsIdentity;
         var id = identity!.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")!.Value;
 
-        var result = await repository.UnpinMovieAsync(id, movieId);
+        var result = await userService.UnpinMovieAsync(id, movieId);
         return result ? Ok() : BadRequest(new List<string> {"This movie is already unpinned"});
     }
 }

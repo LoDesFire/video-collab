@@ -1,5 +1,5 @@
+using VideoCollab.Core.Domain.Models;
 using VideoCollabServer.Dtos.User;
-using VideoCollabServer.Models;
 
 namespace VideoCollabServer.Mappers;
 

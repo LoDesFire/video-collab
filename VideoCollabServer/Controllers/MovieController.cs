@@ -4,9 +4,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
+using VideoCollab.Core.Domain.Abstractions;
+using VideoCollab.Core.Domain.Models;
 using VideoCollabServer.Dtos.Movie;
-using VideoCollabServer.Interfaces;
-using VideoCollabServer.Models;
+using VideoCollabServer.Mappers;
 using VideoCollabServer.Utils;
 
 namespace VideoCollabServer.Controllers;
@@ -14,9 +15,8 @@ namespace VideoCollabServer.Controllers;
 [Route("api/movie")]
 [ApiController]
 public class MovieController(
-    IMovieRepository repository,
-    IHlsService hlsService,
-    ITranscodingMovieRepository transcodingMovieRepository)
+    IMovieService movieService,
+    IHlsService hlsService)
     : ControllerBase
 {
     [HttpGet("all")]
@@ -25,9 +25,12 @@ public class MovieController(
     {
         var identity = HttpContext.User.Identity as ClaimsIdentity;
         var id = identity!.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")!.Value;
-        
-        var moviesResult = await repository.ReadyToViewMoviesAsync(id);
-        return !moviesResult.Succeeded ? StatusCode(500, "Internal Server Error") : Ok(moviesResult.Value);
+        var moviesResult = await movieService.ReadyToViewMoviesAsync();
+        var movies = moviesResult.Value!
+            .Select(m => m.ToItemDto(id))
+            .OrderByDescending(m => m.Pinned)
+            .ToList();
+        return !moviesResult.Succeeded ? StatusCode(500, "Internal Server Error") : Ok(movies);
     }
 
 
@@ -35,15 +38,15 @@ public class MovieController(
     [Authorize]
     public async Task<IActionResult> GetMovie([FromQuery] int movieId)
     {
-        var moviesResult = await repository.MovieById(movieId);
-        return !moviesResult.Succeeded ? BadRequest(moviesResult.Errors) : Ok(moviesResult.Value);
+        var moviesResult = await movieService.MovieById(movieId);
+        return !moviesResult.Succeeded ? BadRequest(moviesResult.Errors) : Ok(moviesResult.Value!.ToMoviePageDto());
     }
 
     [HttpDelete]
     [Authorize]
     public async Task<IActionResult> DeleteMovie([FromQuery] [Required] int movieId)
     {
-        await repository.DeleteMovieAsync(movieId);
+        await movieService.DeleteMovieAsync(movieId);
         hlsService.DeleteMovie(movieId);
 
         return Ok();
@@ -55,12 +58,22 @@ public class MovieController(
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState.GetErrorsList());
-        var createdMovie = await repository.CreateMovieAsync(createMovieDto);
+        var createdMovie = await movieService.CreateMovieAsync(
+            createMovieDto.TrailerLink,
+            createMovieDto.PosterLink,
+            createMovieDto.Name,
+            createMovieDto.Description
+        );
 
         if (!createdMovie.Succeeded)
             return BadRequest();
 
-        return Ok(createdMovie.Value);
+        return Ok(
+            new CreatedMovieDto
+            {
+                Id = createdMovie.Value!.Id
+            }
+        );
     }
 
     [Authorize]
@@ -68,12 +81,12 @@ public class MovieController(
     [RequestSizeLimit(1024 * 1024 * 1024)]
     public async Task<IActionResult> UploadMovie([FromQuery] [Required] int movieId, [Required] IFormFile file)
     {
-        var upload = await hlsService.UploadMovieAsync(movieId, file, repository);
+        var upload = await hlsService.UploadMovieAsync(movieId, file.OpenReadStream(), file.FileName, movieService);
 
         if (!upload.Succeeded)
             return BadRequest(upload.Errors);
 
-        await transcodingMovieRepository.ChangeMovieStatusAsync(movieId, Movie.Statuses.InQueue);
+        await movieService.ChangeMovieStatusAsync(movieId, Movie.Statuses.InQueue);
         return Ok();
     }
 
@@ -97,7 +110,9 @@ public class MovieController(
         if (!hlsFile.Succeeded)
             return BadRequest();
 
-        return new FileStreamResult(hlsFile.Value!.Stream,
-            new MediaTypeHeaderValue(new StringSegment(hlsFile.Value!.ContentType)));
+        var (contentType, stream) = hlsFile.Value;
+
+        return new FileStreamResult(stream,
+            new MediaTypeHeaderValue(new StringSegment(contentType)));
     }
 }

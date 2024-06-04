@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using VideoCollabServer.Data;
-using VideoCollabServer.Models;
-using VideoCollabServer.Repositories;
-using VideoCollabServer.Services;
+using VideoCollab.Core.Domain.Models;
+using VideoCollab.Core.Services;
+using VideoCollab.Persistence.Data;
+using VideoCollab.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
