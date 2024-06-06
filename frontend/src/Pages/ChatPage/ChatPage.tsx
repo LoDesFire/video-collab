@@ -7,15 +7,14 @@ import {JanusServerWS, JanusTextRoomPlugin} from "../../Constants";
 import {Chat} from "../../Components/Chat/Chat";
 import {MessageModel} from "../../Components/Chat/MessageModel";
 import {MessageTypesEnum} from "../../Components/Chat/MessageTypesEnum";
-import {type} from "node:os";
-import {leaveRoom} from "../../Services/UserService";
+import {UserService} from "../../Services/UserService";
 import {useNavigate} from "react-router-dom";
-import {getAllMovie} from "../../Services/MovieService";
+import {MovieService} from "../../Services/MovieService";
 import {MovieDto} from "../../Models/MovieDto";
-import {VideoTestPage} from "../VideoTest/VideoTest";
-import {TestVideoRoom} from "../TestVideoRoom/TestVideoRoom";
+import {Player} from "../../Components/Player/Player";
+import {VideoRoom} from "../../Components/VideoRoom/VideoRoom";
 
-export const ChatTestPage = () => {
+export const ChatPage = () => {
 
     enum stateOfPage {
         Connecting,
@@ -31,7 +30,7 @@ export const ChatTestPage = () => {
     const [movieList, setMovieList] = useState<MovieDto[]>([])
 
     useEffect(() => {
-        getAllMovie().then((r) => {
+        MovieService.getAllMovie().then((r) => {
             if (r?.status == 200)
                 setMovieList(r.data)
         })
@@ -55,6 +54,7 @@ export const ChatTestPage = () => {
     let [movieIdList, setMovieIdList] = useState<number[]>([])
 
     let [mapOfUsername, setMapOfUsername] = useState(new Map<string, string>())
+    const [unpublish, setUnpublish] = useState(false)
 
     // @ts-ignore
     const [textRoom, setTextRoom] = useState<JanusJS.PluginHandle>();
@@ -151,11 +151,11 @@ export const ChatTestPage = () => {
                                                 setWhoIsOperator(undefined)
                                             if (json["operator_id"] != undefined)
                                                 setWhoIsOperator(json["operator_id"])
-                                            if(json["current_movie"])
-                                                if(json["current_movie"] != movieId) {
+                                            if (json["current_movie"])
+                                                if (json["current_movie"] != movieId) {
                                                     setMovieId(json["current_movie"])
                                                 }
-                                            if(json["playlist"]) {
+                                            if (json["playlist"]) {
                                                 movieIdList = json["playlist"]
                                                 setMovieIdList(json["playlist"])
                                             }
@@ -165,28 +165,25 @@ export const ChatTestPage = () => {
                                             if (json["error_code"] == 420) window.location.reload()
                                         } else if (what === "new_operator") {
                                             setWhoIsOperator(json["username"])
-                                        }
-                                        else if (what === "sync") {
+                                        } else if (what === "sync") {
                                             if (json["is_playing"] != undefined) {
                                                 setSyncedIsPlay(json["is_playing"])
                                             }
                                             if (json["time"] != undefined) {
                                                 setSyncedTime(json["time"])
                                             }
-                                            if(json["current_movie"])
-                                                if(json["current_movie"] != movieId) {
+                                            if (json["current_movie"])
+                                                if (json["current_movie"] != movieId) {
                                                     setMovieId(json["current_movie"])
                                                 }
-                                            if(json["playlist"]) {
+                                            if (json["playlist"]) {
                                                 movieIdList = json["playlist"]
                                                 setMovieIdList(json["playlist"])
                                             }
-                                        }
-                                        else if (what === "destroyed") {
+                                        } else if (what === "destroyed") {
                                             toast.info("Kicked")
                                             leaveFromRoom()
-                                        }
-                                        else {
+                                        } else {
                                             if (what === "message") {
                                                 console.log("message")
                                                 type = MessageTypesEnum.message
@@ -244,9 +241,9 @@ export const ChatTestPage = () => {
         const handleLeavePage = async (event: any) => {
             event.preventDefault();
             const myRoom = localStorage.getItem("roomid") as string
-            leaveRoom(myRoom).then(r => {
+            UserService.leaveRoom(myRoom).then(r => {
             })
-            event.returnValue = 'Вы действительно хотите покинуть комнату?'; // Работает только с beforeunload
+            event.returnValue = 'Вы действительно хотите покинуть комнату?';
         };
 
         window.addEventListener('beforeunload', handleLeavePage);
@@ -299,7 +296,7 @@ export const ChatTestPage = () => {
 
     const navigate = useNavigate();
 
-    function leaveFromRoom() {
+    const onLeaveRoom = () => {
         const myRoom = localStorage.getItem("roomid") as string
         let message = {
             textroom: "leave",
@@ -313,22 +310,30 @@ export const ChatTestPage = () => {
                     toast.error(reason);
                 },
                 success: function () {
-                    leaveRoom(myRoom)
+                    UserService.leaveRoom(myRoom)
                 }
             });
-        }  catch {} finally {
+        } catch {
+        } finally {
             navigate("/profile")
             localStorage.removeItem("roomid")
             localStorage.removeItem("userRoomToken")
             localStorage.removeItem("userOwnerId")
         }
+    }
 
+    function leaveFromRoom() {
+        setUnpublish(true)
     }
 
     function registerUsername() {
         const userRoomToken = localStorage.getItem("userRoomToken")
         const userOwnerId = localStorage.getItem("userOwnerId")
         const myRoom = localStorage.getItem("roomid")
+        if (!myRoom) {
+            toast.error("Попробуй заново войти в комнату")
+            leaveFromRoom()
+        }
         let transaction = JanusJS.randomString(12);
         let register = {
             textroom: "join",
@@ -453,7 +458,7 @@ export const ChatTestPage = () => {
         <div className="h-screen grid grid-cols-5">
             <div className="col-span-3 flex flex-col items-center justify-center relative">
                 <div className="relative w-full">
-                    <VideoTestPage
+                    <Player
                         movieId={movieId}
                         sync={syncVideo}
                         isOperator={myId == whoIsOperator}
@@ -464,10 +469,12 @@ export const ChatTestPage = () => {
                 </div>
             </div>
             <div className="col-span-1 row-span-6 h-full bg-gray-100">
-                <TestVideoRoom
+                <VideoRoom
                     roomId={localStorage.getItem("roomid") as string}
                     token={localStorage.getItem("userRoomToken") as string}
                     displayName={user?.username ? user.username : ""}
+                    unpublish={unpublish}
+                    onLeaveRoom={onLeaveRoom}
                 />
             </div>
             <div className="col-span-1 row-span-6 h-full bg-gray-100">

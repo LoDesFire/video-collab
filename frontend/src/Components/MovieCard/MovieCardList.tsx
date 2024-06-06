@@ -1,6 +1,5 @@
 import {MovieDto} from "../../Models/MovieDto";
 import {MovieCard} from "./MovieCard";
-import {bool, number} from "yup";
 
 interface Props {
     savedMoviesResult: MovieDto[];

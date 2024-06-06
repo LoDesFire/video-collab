@@ -1,13 +1,7 @@
 import React, {useEffect, useRef, useState} from "react";
 import {Message} from "./Message";
 import {MessageModel} from "./MessageModel";
-import {
-    AiOutlineLink,
-    AiOutlineSend,
-    AiOutlineTeam,
-    AiOutlineCloseCircle,
-    AiOutlineVideoCameraAdd, AiOutlineVideoCamera
-} from "react-icons/ai";
+import {AiOutlineCloseCircle, AiOutlineLink, AiOutlineSend, AiOutlineTeam} from "react-icons/ai";
 import {toast} from "react-toastify";
 import {MembersElement} from "./MembersElement";
 import {MovieDto} from "../../Models/MovieDto";

@@ -1,11 +1,11 @@
 import {createVideoRoomClient} from "janus-simple-videoroom-client";
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {JanusServerWS} from "../../Constants";
-import {AiOutlineAudio, AiOutlineAudioMuted} from "react-icons/ai";
 import {ReactComponent as VideoMuted} from './icons/video-muted.svg';
 import {ReactComponent as VideoNotMuted} from './icons/video-not-muted.svg';
 import {ReactComponent as MicroMuted} from './icons/microphone-muted.svg';
 import {ReactComponent as MicroNotMuted} from './icons/microphone-not-muted.svg';
+import {toast} from "react-toastify";
 
 const makeDisplay = (displayName: string, isMe: boolean) => {
     console.log("Make Display, Is Me? : " + isMe)
@@ -55,10 +55,12 @@ const makeDisplay = (displayName: string, isMe: boolean) => {
 interface TestVideoRoomProps {
     roomId: string,
     token: string,
-    displayName: string
+    displayName: string,
+    unpublish: boolean,
+    onLeaveRoom: () => void,
 }
 
-export const TestVideoRoom = ({roomId, displayName, token}: TestVideoRoomProps) => {
+export const VideoRoom = ({roomId, displayName, token, unpublish, onLeaveRoom}: TestVideoRoomProps) => {
     const [server, setServer] = useState(JanusServerWS);
     const [clientReady, setClientReady] = useState<any>(null);
     let [room, setRoom] = useState<any>(null);
@@ -77,6 +79,17 @@ export const TestVideoRoom = ({roomId, displayName, token}: TestVideoRoomProps) 
             connect(server, roomId, displayName, token);
         }
     }, [clientReady]);
+
+    useEffect(() => {
+        console.log("Unpublish" + unpublish)
+        if (unpublish) {
+            try {
+                pub.unpublish()
+            } catch (e) {
+            }
+            onLeaveRoom()
+        }
+    }, [unpublish]);
 
     useEffect(() => {
         if (pub) {
@@ -109,20 +122,24 @@ export const TestVideoRoom = ({roomId, displayName, token}: TestVideoRoomProps) 
             {type: "audio", capture: !isMuted},
             {type: "video", capture: !isCameraOff}
         ]
-        const tpub = await room.publish({
-            publishOptions: {
-                display: displayName,
-            },
-            mediaOptions: {
-                tracks: tracks
-            }
-        })
-        console.log(tpub)
-        setPub(tpub)
-        pub = tpub
-        const myVideo = makeDisplay(displayName, true);
-        tpub.onTrackAdded((track: MediaStreamTrack) => myVideo.stream.addTrack(track));
-        tpub.onTrackRemoved((track: MediaStreamTrack) => myVideo.stream.removeTrack(track));
+        try {
+            const tpub = await room.publish({
+                publishOptions: {
+                    display: displayName,
+                },
+                mediaOptions: {
+                    tracks: tracks
+                }
+            })
+            console.log(tpub)
+            setPub(tpub)
+            pub = tpub
+            const myVideo = makeDisplay(displayName, true);
+            tpub.onTrackAdded((track: MediaStreamTrack) => myVideo.stream.addTrack(track));
+            tpub.onTrackRemoved((track: MediaStreamTrack) => myVideo.stream.removeTrack(track));
+        } catch {
+            toast.error("Что-то пошло не так... Попробуй перезагрузить страницу")
+        }
     }
 
     const subscribe = async (publisher: any, room: any, subs: any) => {
@@ -159,7 +176,7 @@ export const TestVideoRoom = ({roomId, displayName, token}: TestVideoRoomProps) 
             <div id="display" className="flex flex-col p-4 space-y-4"></div>
             <div>
                 <button className="pl-10" onClick={toggleMute}>
-                    {isMuted ? <MicroMuted /> : <MicroNotMuted />}
+                    {isMuted ? <MicroMuted/> : <MicroNotMuted/>}
                 </button>
                 <button className="pl-5" onClick={toggleCamera}>
                     {isCameraOff ? <VideoMuted/> : <VideoNotMuted/>}

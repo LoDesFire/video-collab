@@ -1,14 +1,6 @@
 import {MovieDto} from "../../Models/MovieDto";
-import React, {useEffect, useState} from "react";
-import {Link, useNavigate} from "react-router-dom";
-import {
-    AiFillCamera,
-    AiFillStar,
-    AiFillVideoCamera,
-    AiOutlineCamera,
-    AiOutlineVideoCameraAdd,
-    AiTwotoneStar
-} from 'react-icons/ai';
+import React from "react";
+import {AiFillCamera, AiOutlineCamera, AiOutlineVideoCameraAdd} from 'react-icons/ai';
 
 interface Props {
     movie: MovieDto;
@@ -64,7 +56,8 @@ export const MovieCardForRoom = ({
                     )
                     }
                 </div>
-                {isOperator && playMovie && !isCurrentMovie && <button onClick={handleWatch}><AiOutlineCamera size={24}/></button>}
+                {isOperator && playMovie && !isCurrentMovie &&
+                    <button onClick={handleWatch}><AiOutlineCamera size={24}/></button>}
 
             </div>
         </div>

@@ -1,13 +1,10 @@
 import React, {useEffect, useRef, useState} from "react";
 import ReactPlayer from 'react-player/'
-import {
-    AiOutlineFullscreen,
-    AiOutlineFullscreenExit,
-    AiOutlinePauseCircle, AiOutlinePlayCircle
-} from "react-icons/ai";
+import {AiOutlineFullscreen, AiOutlineFullscreenExit, AiOutlinePauseCircle, AiOutlinePlayCircle} from "react-icons/ai";
 import fullscreen from "screenfull"
 import Hls from "hls.js";
 import {wait} from "@testing-library/user-event/dist/utils";
+import {toast} from "react-toastify";
 
 type VideoProps = {
     movieId: number,
@@ -18,7 +15,7 @@ type VideoProps = {
     playNext: () => void
 }
 
-export const VideoTestPage = ({movieId, sync, isOperator, syncedTime, syncedPause, playNext}: VideoProps) => {
+export const Player = ({movieId, sync, isOperator, syncedTime, syncedPause, playNext}: VideoProps) => {
     const refPlayer = useRef<ReactPlayer>(null)
     const containerRef = useRef(null);
 
@@ -74,6 +71,8 @@ export const VideoTestPage = ({movieId, sync, isOperator, syncedTime, syncedPaus
                 qualitiesUrls = [tmpUrl, ...qualitiesUrls]
                 setState({...state, listOfQualities: listOfQualities, qualitiesUrls: qualitiesUrls})
             });
+        } else {
+            toast.error("HLS not support!");
         }
     }, [movieId]);
 

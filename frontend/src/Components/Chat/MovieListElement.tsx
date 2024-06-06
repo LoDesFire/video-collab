@@ -1,6 +1,5 @@
 import React from "react";
 import {MovieDto} from "../../Models/MovieDto";
-import {MovieCard} from "../MovieCard/MovieCard";
 import {MovieCardForRoom} from "./MovieCardForRoom";
 
 type MoviesListProps =

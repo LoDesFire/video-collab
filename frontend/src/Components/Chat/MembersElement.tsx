@@ -20,9 +20,10 @@ export const MembersElement = ({chatMembers, isOwner, setOperator, operatorId, m
             <div className="flex flex-col h-full overflow-y-auto p-4">
                 <div className="flex flex-col flex-grow">
                     {Array.from(chatMembers.values()).map((member, index) => (
-                        <div className={Array.from(chatMembers.keys())[index] == myId ? backgroundMe : backgroundOther} key={index}>
+                        <div className={Array.from(chatMembers.keys())[index] == myId ? backgroundMe : backgroundOther}
+                             key={index}>
                             <div className="w-12 text-left">{index + 1}.</div>
-                            <div className={"flex-1 text-center" }>{member}</div>
+                            <div className={"flex-1 text-center"}>{member}</div>
                             {isOwner &&
                                 (
                                     Array.from(chatMembers.keys())[index] != operatorId ?

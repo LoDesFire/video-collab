@@ -1,27 +1,27 @@
 import React, {useEffect, useState} from "react";
-import {useAuth} from "../../Context/useAuth";
-import {deleteRoom, userInfoGetAPI, userPinMovieAPI, userUnpinMovieAPI} from "../../Services/UserService";
-import {UserProfileInfo} from "../../Models/User";
+import {UserService} from "../../Services/UserService";
+import {UserProfileInfo} from "../../Models/UserDto";
 import {MovieList} from "../../Components/MovieCard/MovieCardList";
 import {toast} from "react-toastify";
 import {Link} from "react-router-dom";
 import Navbar from "../../Components/Navbar/Navbar";
 import {RoomList} from "../../Components/RoomCard/RoomCardList";
+import {MovieDto} from "../../Models/MovieDto";
+import {MovieService} from "../../Services/MovieService";
 
-type Props = {};
-
-const ProfilePage = (props: Props) => {
+const ProfilePage = () => {
 
     useEffect(() => {
         getUserInfo()
+        getAllMovies()
     }, []);
 
-    const {user} = useAuth();
     const [userInfo, setUserInfo] = useState<UserProfileInfo | null>(null)
+    const [allMovies, setAllMovies] = useState<MovieDto[]>([])
     const [listOfPinned, setListOfPinned] = useState<Map<number, boolean>>(new Map<number, boolean>)
 
     const getUserInfo = () => {
-        userInfoGetAPI().then(r => {
+        UserService.userInfoGetAPI().then(r => {
                 if (r?.data) {
                     setUserInfo(r.data)
                     if (r.data?.pinnedMovies != undefined) {
@@ -33,13 +33,22 @@ const ProfilePage = (props: Props) => {
                     }
                 }
             }
-        ).catch((e) => {
+        ).catch(() => {
             setUserInfo(null)
         })
     }
 
+    const getAllMovies = () => {
+        MovieService.getAllMovie().then(r => {
+            if (r?.status == 200) {
+                setAllMovies(r.data)
+            }
+        }).catch(() => {
+        })
+    }
+
     const userPinMovie = (id: number) => {
-        userPinMovieAPI(id).then(r => {
+        UserService.userPinMovieAPI(id).then(r => {
             if (r?.status == 200) {
                 setListOfPinned((it) => {
                     toast.success("Прикреплено")
@@ -51,7 +60,7 @@ const ProfilePage = (props: Props) => {
         })
     }
     const userUnpinMovie = (id: number) => {
-        userUnpinMovieAPI(id).then(r => {
+        UserService.userUnpinMovieAPI(id).then(r => {
             if (r?.status == 200) {
                 setListOfPinned((it) => {
                     toast.success("Откреплено")
@@ -63,8 +72,8 @@ const ProfilePage = (props: Props) => {
     }
 
     const handleDeleteRoom = (id: string) => {
-        deleteRoom(id).then(r => {
-            if(r?.status == 200) {
+        UserService.deleteRoom(id).then(r => {
+            if (r?.status == 200) {
                 getUserInfo()
                 toast.success("Комната удалена")
             }
@@ -98,6 +107,17 @@ const ProfilePage = (props: Props) => {
                     </h1>
                 </div>
                 <RoomList myRoomsList={userInfo?.ownedRooms ? userInfo.ownedRooms : []} onDelete={handleDeleteRoom}/>
+                <div className="flex w-full justify-between">
+                    <h1 className="text-3xl text-left font-bold">
+                        Все фильмы
+                    </h1>
+                </div>
+                <MovieList savedMoviesResult={allMovies}
+                           listOfPinned={listOfPinned}
+                           userPinMovie={(id: number) => userPinMovie(id)}
+                           userUnpinMovie={(id: number) => userUnpinMovie(id)}
+                />
+
             </div>
         </>
     );

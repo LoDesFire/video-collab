@@ -1,7 +1,7 @@
-import {UserProfileId} from "../Models/User";
+import {UserProfileId} from "../Models/UserDto";
 import React, {createContext, useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {loginAPI, registerAPI} from "../Services/AuthService";
+import {AuthService} from "../Services/AuthService";
 import {toast} from "react-toastify";
 import axios from "axios";
 
@@ -39,29 +39,29 @@ export const UserProvider = ({children}: Props) => {
         username: string,
         password: string
     ) => {
-        await loginAPI(username, password)
-                .then((res) => {
-                    if (res) {
-                        localStorage.setItem("token", res?.data.token)
-                        const userObj: UserProfileId = {
-                            id: res?.data.id,
-                            username: res?.data.username,
-                        }
-                        localStorage.setItem("user", JSON.stringify(userObj));
-                        setToken(res?.data.token)
-                        axios.defaults.headers.common.Authorization = "Bearer " + res?.data.token;
-                        navigate("/profile")
-                        setUser(userObj!)
+        await AuthService.loginAPI(username, password)
+            .then((res) => {
+                if (res) {
+                    localStorage.setItem("token", res?.data.token)
+                    const userObj: UserProfileId = {
+                        id: res?.data.id,
+                        username: res?.data.username,
                     }
-                }).catch(() => toast.error("Ошибка сервера"));
-        }
+                    localStorage.setItem("user", JSON.stringify(userObj));
+                    setToken(res?.data.token)
+                    axios.defaults.headers.common.Authorization = "Bearer " + res?.data.token;
+                    navigate("/profile")
+                    setUser(userObj!)
+                }
+            }).catch(() => toast.error("Ошибка сервера"));
+    }
 
 
-        const registerUser = async (
-            username: string,
-            password: string
-        ) => {
-        await registerAPI(username, password)
+    const registerUser = async (
+        username: string,
+        password: string
+    ) => {
+        await AuthService.registerAPI(username, password)
             .then((res) => {
                 if (res) {
                     localStorage.setItem("token", res?.data.token)

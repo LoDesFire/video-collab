@@ -1,20 +1,18 @@
 import React from "react";
-import {createRoom} from "../../Services/UserService";
+import {UserService} from "../../Services/UserService";
 import {toast} from "react-toastify";
 import {useNavigate} from "react-router-dom";
 import Navbar from "../../Components/Navbar/Navbar";
 
-type Props = {};
-
-const CreateRoomPage = (props: Props) => {
+const CreateRoomPage = () => {
     const navigate = useNavigate();
     const createRoomBtnClicked = () => {
-        createRoom().then(r => {
+        UserService.createRoom().then(r => {
                 if (r != null) {
                     localStorage.setItem("userOwnerId", r.data.owner.id)
                     localStorage.setItem("roomid", r.data.id)
                     localStorage.setItem("userRoomToken", r.data.owner.textroomToken)
-                    navigate('/test/chat')
+                    navigate('/chat')
                 } else {
                     toast.error("Something went wrong")
                 }

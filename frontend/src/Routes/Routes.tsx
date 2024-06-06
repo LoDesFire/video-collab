@@ -4,14 +4,13 @@ import App from "../App";
 import HomePage from "../Pages/HomePage/HomePage";
 import LoginPage from "../Pages/LoginPage/LoginPage";
 import RegisterPage from "../Pages/RegisterPage/RegisterPage";
-import {AuthRequiredProtectRoute, /*NotAuthRequiredProtectRoute*/} from "./AuthRequiredProtectRoute";
+import {AuthRequiredProtectRoute,} from "./AuthRequiredProtectRoute";
 import ProfilePage from "../Pages/ProfilePage/ProfilePage";
 import ConnectToRoomPage from "../Pages/ConnectToRoomPage/ConnectToRoomPage";
 import CreateRoomPage from "../Pages/CreateRoomPage/CreateRoomPage";
-import {VideoTestPage} from "../Pages/VideoTest/VideoTest";
-import {UploadVideoPage} from "../Pages/UploadVideo/UploadVideoPage";
-import {ChatTestPage} from "../Pages/ChatTest/ChatTest";
-import {TestVideoRoom} from "../Pages/TestVideoRoom/TestVideoRoom";
+import {UploadVideoPage} from "../Pages/UploadVideoPage/UploadVideoPage";
+import {ChatPage} from "../Pages/ChatPage/ChatPage";
+import {VideoInfo} from "../Pages/VideoInfoPage/VideoInfo";
 
 export const router = createBrowserRouter([
         {
@@ -72,12 +71,18 @@ export const router = createBrowserRouter([
                         </AuthRequiredProtectRoute>
                 },
                 {
-                    path: "test/view/:id",
-                    element: <VideoTestPage movieId={1} sync={() => {}} isOperator={true} syncedTime={0} syncedPause={false} playNext={() => {}}/>
+                    path: "movie/:id",
+                    element:
+                        <AuthRequiredProtectRoute>
+                            <VideoInfo/>
+                        </AuthRequiredProtectRoute>
                 },
                 {
-                    path: "test/chat",
-                    element: <ChatTestPage/>
+                    path: "chat",
+                    element:
+                        <AuthRequiredProtectRoute>
+                            <ChatPage/>
+                        </AuthRequiredProtectRoute>
                 }
             ]
         }

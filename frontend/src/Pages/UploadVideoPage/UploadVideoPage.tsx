@@ -1,10 +1,10 @@
 import React, {useState} from "react";
-import {movieAddNew, uploadMovie} from "../../Services/MovieService";
+import {MovieService} from "../../Services/MovieService";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import * as Yup from "yup";
 import {toast} from "react-toastify";
-import {userPinMovieAPI, userUnpinMovieAPI} from "../../Services/UserService";
+import {UserService} from "../../Services/UserService";
 import {useNavigate} from "react-router-dom";
 import Navbar from "../../Components/Navbar/Navbar";
 
@@ -46,7 +46,7 @@ export const UploadVideoPage = () => {
 
     const sendMovieDataToServer = (form: CreateMovieForm) => {
         if (movieId < 0) {
-            movieAddNew(form.name, form.description, form.trailerUrl, form.posterUrl)
+            MovieService.movieAddNew(form.name, form.description, form.trailerUrl, form.posterUrl)
                 .then(r => {
                         if (r?.data != null) {
                             setMovieId(r.data.id)
@@ -61,7 +61,7 @@ export const UploadVideoPage = () => {
     }
 
     const saveToFavourite = () => {
-        userPinMovieAPI(movieId).then(r => {
+        UserService.userPinMovieAPI(movieId).then(r => {
             if (r?.status == 200) {
                 toast.success("Готово")
                 navigate("/profile")
@@ -74,7 +74,7 @@ export const UploadVideoPage = () => {
         setProgress(0);
         if (!currentFile) return;
 
-        uploadMovie(currentFile, movieId, (event: any) => {
+        MovieService.uploadMovie(currentFile, movieId, (event: any) => {
             setProgress(Math.round((100 * event.loaded) / event.total));
         })
             .then((response) => {
