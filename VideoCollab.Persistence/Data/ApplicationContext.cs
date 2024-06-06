@@ -20,9 +20,10 @@ public sealed class ApplicationContext : IdentityDbContext<User>
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<User>()
-            .HasMany(u => u.ConnectedRooms)
-            .WithMany(r => r.JoinedUsers)
-            .UsingEntity(j => j.ToTable("RoomUsers"))
+            .HasOne(u => u.ConnectedRoom)
+            .WithMany(r => r.JoinedUsers);
+        
+        modelBuilder.Entity<User>()
             .HasMany(u => u.OwnedRooms)
             .WithOne(r => r.Owner);
 

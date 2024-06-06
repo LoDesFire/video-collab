@@ -5,15 +5,6 @@ namespace VideoCollabServer.Mappers;
 
 public static class MovieMappers
 {
-    public static MovieProfileRoomDto ToProfileRoomDto(this Movie movieModel)
-    {
-        return new MovieProfileRoomDto
-        {
-            Id = movieModel.Id,
-            Name = movieModel.Name
-        };
-    }
-
     public static PinnedMovieDto ToPinnedDto(this Movie movieModel)
     {
         return new PinnedMovieDto

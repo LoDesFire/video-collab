@@ -13,6 +13,5 @@ public class Room
     [MaxLength(256)]
     public string TextRoomSecret { get; set; } = null!;
     public List<User> JoinedUsers { get; init; } = [];
-    public List<Movie> Playlist { get; init; } = [];
 }
 

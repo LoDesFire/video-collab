@@ -24,6 +24,4 @@ public class Movie
     public Statuses Status { get; set; }
     public List<Link> Links { get; set; } = [];
     public List<User> UsersPinnedMovie { get; set; } = [];
-    
-    public List<Room> Rooms { get; set; } = [];
 }

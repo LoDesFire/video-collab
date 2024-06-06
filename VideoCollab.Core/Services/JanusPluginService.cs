@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using VideoCollab.Core.Domain;
 using VideoCollab.Core.Domain.Abstractions;
@@ -36,8 +37,8 @@ public class JanusPluginService(IConfiguration configuration) : IJanusPluginServ
             return Result.Error("Internal Server Error");
 
         var pluginData = res.Value.GetProperty("data");
-        return pluginData.GetProperty(PluginName).ToString() == "error"
-            ? Result.Error(pluginData.GetProperty("error").ToString())
+        return pluginData.TryGetProperty("error", out var error) 
+            ? Result.Error(error.ToString()) 
             : Result.Ok();
     }
     

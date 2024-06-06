@@ -77,7 +77,7 @@ public class RoomService(
         if (room == null)
             return;
 
-        user.ConnectedRooms.Remove(room);
+        user.ConnectedRoom = null;
 
         // await janusRoomService.DisallowToken(user.GetRoomToken(), roomId, room.TextRoomSecret);
 

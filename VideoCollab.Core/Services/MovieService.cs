@@ -6,8 +6,7 @@ namespace VideoCollab.Core.Services;
 
 public class MovieService(
     ILinkRepository linkRepository,
-    IMovieRepository movieRepository,
-    IUserRepository userRepository) : IMovieService
+    IMovieRepository movieRepository) : IMovieService
 {
     public async Task DeleteMovieAsync(int movieId)
     {

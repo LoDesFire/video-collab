@@ -13,8 +13,6 @@ public class UserRepository(ApplicationContext context) : IUserRepository
             .Include(u => u.PinnedMovies)
             .ThenInclude(m => m.Links)
             .Include(u => u.OwnedRooms)
-            .ThenInclude(r => r.Playlist)
-            .Include(u => u.OwnedRooms)
             .ThenInclude(r => r.JoinedUsers)
             .FirstAsync(u => u.Id == id);
     }
@@ -22,7 +20,6 @@ public class UserRepository(ApplicationContext context) : IUserRepository
     public async Task<User> GetUserConnectedRoomsById(string id)
     {
         return await context.Users
-            .Include(u => u.ConnectedRooms)
             .FirstAsync(u => u.Id == id);
     }
 

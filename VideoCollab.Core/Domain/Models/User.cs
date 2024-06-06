@@ -7,8 +7,7 @@ namespace VideoCollab.Core.Domain.Models;
 public class User : IdentityUser
 {
     public List<Movie> PinnedMovies { get; init; } = [];
-    public List<User> RecentCallUsers { get; init; } = [];
-    public List<Room> ConnectedRooms { get; init; } = [];
+    public Room? ConnectedRoom { get; set; }
     public List<Room> OwnedRooms { get; init; } = [];
     public string GetRoomToken()
     {

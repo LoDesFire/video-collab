@@ -11,16 +11,6 @@ public static class UserMappers
         {
             OwnedRooms = userModel.OwnedRooms.Select(r => r.ToProfileDto()).ToList(),
             PinnedMovies = userModel.PinnedMovies.Select(m => m.ToPinnedDto()).ToList(),
-            Users = userModel.RecentCallUsers.Select(u => u.ToRecentCallDto()).ToList()
-        };
-    }
-
-    private static UserRecentCallDto ToRecentCallDto(this User userModel)
-    {
-        return new UserRecentCallDto
-        {
-            Id = userModel.Id,
-            Username = userModel.UserName
         };
     }
 }

@@ -85,7 +85,6 @@ public class HlsService : IHlsService
             }
 
             await ChangeMovieStatusAsync(movieId, Movie.Statuses.ReadyToView);
-            // TODO: Add Transcoding progress
         }
         _transcoderBusy = false;
     }

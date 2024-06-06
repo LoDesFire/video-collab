@@ -2,17 +2,20 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VideoCollab.Persistence.Data;
 
 #nullable disable
 
-namespace VideoCollabServer.Migrations
+namespace VideoCollab.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20240606122122_Initial")]
+    partial class Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.3");
@@ -145,21 +148,6 @@ namespace VideoCollabServer.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("MovieRoom", b =>
-                {
-                    b.Property<int>("PlaylistId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("RoomsId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("PlaylistId", "RoomsId");
-
-                    b.HasIndex("RoomsId");
-
-                    b.ToTable("MovieRoom");
-                });
-
             modelBuilder.Entity("MovieUser", b =>
                 {
                     b.Property<int>("PinnedMoviesId")
@@ -175,22 +163,7 @@ namespace VideoCollabServer.Migrations
                     b.ToTable("MovieUser");
                 });
 
-            modelBuilder.Entity("RoomUser", b =>
-                {
-                    b.Property<string>("ConnectedRoomsId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("JoinedUsersId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("ConnectedRoomsId", "JoinedUsersId");
-
-                    b.HasIndex("JoinedUsersId");
-
-                    b.ToTable("RoomUsers", (string)null);
-                });
-
-            modelBuilder.Entity("VideoCollabServer.Models.Link", b =>
+            modelBuilder.Entity("VideoCollab.Core.Domain.Models.Link", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -213,7 +186,7 @@ namespace VideoCollabServer.Migrations
                     b.ToTable("Links");
                 });
 
-            modelBuilder.Entity("VideoCollabServer.Models.Movie", b =>
+            modelBuilder.Entity("VideoCollab.Core.Domain.Models.Movie", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -237,7 +210,7 @@ namespace VideoCollabServer.Migrations
                     b.ToTable("Movies");
                 });
 
-            modelBuilder.Entity("VideoCollabServer.Models.Room", b =>
+            modelBuilder.Entity("VideoCollab.Core.Domain.Models.Room", b =>
                 {
                     b.Property<string>("Id")
                         .HasMaxLength(256)
@@ -267,7 +240,7 @@ namespace VideoCollabServer.Migrations
                     b.ToTable("Rooms");
                 });
 
-            modelBuilder.Entity("VideoCollabServer.Models.User", b =>
+            modelBuilder.Entity("VideoCollab.Core.Domain.Models.User", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("TEXT");
@@ -277,6 +250,9 @@ namespace VideoCollabServer.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConnectedRoomId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
@@ -315,14 +291,13 @@ namespace VideoCollabServer.Migrations
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ConnectedRoomId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -330,8 +305,6 @@ namespace VideoCollabServer.Migrations
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -347,7 +320,7 @@ namespace VideoCollabServer.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("VideoCollabServer.Models.User", null)
+                    b.HasOne("VideoCollab.Core.Domain.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -356,7 +329,7 @@ namespace VideoCollabServer.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("VideoCollabServer.Models.User", null)
+                    b.HasOne("VideoCollab.Core.Domain.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -371,7 +344,7 @@ namespace VideoCollabServer.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("VideoCollabServer.Models.User", null)
+                    b.HasOne("VideoCollab.Core.Domain.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -380,74 +353,44 @@ namespace VideoCollabServer.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("VideoCollabServer.Models.User", null)
+                    b.HasOne("VideoCollab.Core.Domain.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("MovieRoom", b =>
-                {
-                    b.HasOne("VideoCollabServer.Models.Movie", null)
-                        .WithMany()
-                        .HasForeignKey("PlaylistId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("VideoCollabServer.Models.Room", null)
-                        .WithMany()
-                        .HasForeignKey("RoomsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("MovieUser", b =>
                 {
-                    b.HasOne("VideoCollabServer.Models.Movie", null)
+                    b.HasOne("VideoCollab.Core.Domain.Models.Movie", null)
                         .WithMany()
                         .HasForeignKey("PinnedMoviesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("VideoCollabServer.Models.User", null)
+                    b.HasOne("VideoCollab.Core.Domain.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UsersPinnedMovieId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("RoomUser", b =>
+            modelBuilder.Entity("VideoCollab.Core.Domain.Models.Link", b =>
                 {
-                    b.HasOne("VideoCollabServer.Models.Room", null)
-                        .WithMany()
-                        .HasForeignKey("ConnectedRoomsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("VideoCollabServer.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("JoinedUsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("VideoCollabServer.Models.Link", b =>
-                {
-                    b.HasOne("VideoCollabServer.Models.Movie", "Movie")
+                    b.HasOne("VideoCollab.Core.Domain.Models.Movie", "Movie")
                         .WithMany("Links")
                         .HasForeignKey("MovieId");
 
                     b.Navigation("Movie");
                 });
 
-            modelBuilder.Entity("VideoCollabServer.Models.Room", b =>
+            modelBuilder.Entity("VideoCollab.Core.Domain.Models.Room", b =>
                 {
-                    b.HasOne("VideoCollabServer.Models.User", "Owner")
+                    b.HasOne("VideoCollab.Core.Domain.Models.User", "Owner")
                         .WithMany("OwnedRooms")
                         .HasForeignKey("OwnerId");
 
-                    b.HasOne("VideoCollabServer.Models.User", "VideoOperator")
+                    b.HasOne("VideoCollab.Core.Domain.Models.User", "VideoOperator")
                         .WithMany()
                         .HasForeignKey("VideoOperatorId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -458,23 +401,28 @@ namespace VideoCollabServer.Migrations
                     b.Navigation("VideoOperator");
                 });
 
-            modelBuilder.Entity("VideoCollabServer.Models.User", b =>
+            modelBuilder.Entity("VideoCollab.Core.Domain.Models.User", b =>
                 {
-                    b.HasOne("VideoCollabServer.Models.User", null)
-                        .WithMany("RecentCallUsers")
-                        .HasForeignKey("UserId");
+                    b.HasOne("VideoCollab.Core.Domain.Models.Room", "ConnectedRoom")
+                        .WithMany("JoinedUsers")
+                        .HasForeignKey("ConnectedRoomId");
+
+                    b.Navigation("ConnectedRoom");
                 });
 
-            modelBuilder.Entity("VideoCollabServer.Models.Movie", b =>
+            modelBuilder.Entity("VideoCollab.Core.Domain.Models.Movie", b =>
                 {
                     b.Navigation("Links");
                 });
 
-            modelBuilder.Entity("VideoCollabServer.Models.User", b =>
+            modelBuilder.Entity("VideoCollab.Core.Domain.Models.Room", b =>
+                {
+                    b.Navigation("JoinedUsers");
+                });
+
+            modelBuilder.Entity("VideoCollab.Core.Domain.Models.User", b =>
                 {
                     b.Navigation("OwnedRooms");
-
-                    b.Navigation("RecentCallUsers");
                 });
 #pragma warning restore 612, 618
         }
