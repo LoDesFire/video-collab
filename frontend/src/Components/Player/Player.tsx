@@ -3,11 +3,10 @@ import ReactPlayer from 'react-player/'
 import {AiOutlineFullscreen, AiOutlineFullscreenExit, AiOutlinePauseCircle, AiOutlinePlayCircle} from "react-icons/ai";
 import fullscreen from "screenfull"
 import Hls from "hls.js";
-import {wait} from "@testing-library/user-event/dist/utils";
 import {toast} from "react-toastify";
 
 type VideoProps = {
-    movieId: number,
+    movieId: string,
     sync: (isPlaying: boolean, currentTime: number) => void,
     isOperator: boolean,
     syncedPause: boolean,
@@ -19,7 +18,7 @@ export const Player = ({movieId, sync, isOperator, syncedTime, syncedPause, play
     const refPlayer = useRef<ReactPlayer>(null)
     const containerRef = useRef(null);
 
-    let tmpUrl = "/api/movie/watch/" + movieId + "/.m3u8"
+    let tmpUrl = String(movieId).includes(String("https://www.youtube.com/")) ? movieId : "/api/movie/watch/" + movieId + "/.m3u8"
     const [duration, setDuration] = useState<number>(0)
     const [videoUrl, setVideoUrl] = useState(tmpUrl);
 
@@ -55,10 +54,13 @@ export const Player = ({movieId, sync, isOperator, syncedTime, syncedPause, play
     } = state
 
     useEffect(() => {
-        if (movieId == 0) return
-        let tempUrl = "/api/movie/watch/" + movieId + "/.m3u8"
+        if (movieId == '') return
+        let tempUrl = String(movieId).includes(String("https://www.youtube.com/"), 0) ? movieId + "?autoplay=1" : "/api/movie/watch/" + movieId + "/.m3u8"
+        toast.info(tempUrl)
         setVideoUrl(tempUrl)
-        refPlayer?.current?.seekTo(state.playedSec, "seconds")
+        refPlayer?.current?.seekTo(0, "seconds")
+        setState({...state, playedSec: 0})
+        if (String(movieId).includes(String("https://www.youtube.com/"), 0)) return;
         if (Hls.isSupported()) {
             const hls = new Hls();
             hls.loadSource(tmpUrl);
@@ -161,26 +163,26 @@ export const Player = ({movieId, sync, isOperator, syncedTime, syncedPause, play
 
     return (
         <>
-            {movieId != 0 && (
-                <div className="fixed left-0 w-3/5 ">
+            {movieId != '' && (
+                <div className="fixed left-0 w-3/5">
                     <div ref={containerRef}>
                         <ReactPlayer
-                            onReady={() => wait(110).then(() => {
-                                if (isOperator)
-                                    refPlayer?.current?.seekTo(state.playedSec, "seconds")
-                            })}
+                            // onReady={() => wait(110).then(() => {
+                            //     if (isOperator)
+                            //         refPlayer?.current?.seekTo(state.playedSec, "seconds")
+                            // })}
                             onDuration={() => {
                                 setDuration(refPlayer?.current?.getDuration() ? refPlayer?.current.getDuration() : 0)
                             }}
                             /*onEnded={playNext}*/
                             url={videoUrl}
                             controls={false}
-                            width="100%"
                             playing={playing}
                             volume={volume}
                             ref={refPlayer}
                             onProgress={handleProgress}
-                            height="auto"
+                            width="100%"
+                            height="100%"
                         />
                         {ControlsVideo}
                     </div>
@@ -188,7 +190,7 @@ export const Player = ({movieId, sync, isOperator, syncedTime, syncedPause, play
             )
             }
             {
-                movieId == 0 && (
+                movieId == '' && (
                     <div>
                         Видео не выбрано.
                     </div>

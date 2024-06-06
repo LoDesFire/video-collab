@@ -20,14 +20,11 @@ type ChatProps = {
     operatorId: string | undefined,
     myId: string,
     movieList: MovieDto[],
-    currentMovieId: number | undefined,
+    currentMovieId: string | undefined,
     playlistMoviesIds: number[],
     onAddClicked: (id: number) => void
     onRemoveClicked: (id: number) => void
-    playMovie: (id: number) => void,
-    roomId: string,
-    token: string,
-    name: string
+    playMovie: (id: string) => void,
 }
 
 enum ChatStates {
@@ -53,9 +50,6 @@ export const Chat = ({
                          playlistMoviesIds,
                          onAddClicked,
                          onRemoveClicked,
-                         roomId,
-                         token,
-                         name
                      }: ChatProps) => {
 
     const [input, setInput] = useState<string>('');

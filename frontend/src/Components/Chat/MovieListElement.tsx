@@ -1,11 +1,13 @@
-import React from "react";
+import React, {useState} from "react";
 import {MovieDto} from "../../Models/MovieDto";
 import {MovieCardForRoom} from "./MovieCardForRoom";
+import {AiOutlineSend} from "react-icons/ai";
+import {toast} from "react-toastify";
 
 type MoviesListProps =
     {
         movieList: MovieDto[],
-        currentMovieId: number | undefined,
+        currentMovieId: string | undefined,
         playlistMoviesIds: number[],
         onAddClicked: (id: number) => void
         onRemoveClicked: (id: number) => void
@@ -32,7 +34,7 @@ export const AddMoviesListElement = ({
                             addMovie={onAddClicked}
                             removeMovie={onRemoveClicked}
                             isAdded={playlistMoviesIds.includes(movie.id)}
-                            isCurrentMovie={currentMovieId == movie.id}
+                            isCurrentMovie={currentMovieId == '' + movie.id}
                             playMovie={undefined}
                             isOperator={isOperator}
                         />

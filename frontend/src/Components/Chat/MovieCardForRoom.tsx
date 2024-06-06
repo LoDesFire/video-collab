@@ -7,7 +7,7 @@ interface Props {
     isAdded: boolean;
     addMovie: (id: number) => void;
     removeMovie: (id: number) => void;
-    playMovie: ((id: number) => void) | undefined
+    playMovie: ((id: string) => void) | undefined
     isCurrentMovie: boolean
     isOperator: boolean
 }
@@ -24,7 +24,7 @@ export const MovieCardForRoom = ({
 
     const handleWatch = () => {
         if (playMovie)
-            playMovie(movie.id)
+            playMovie('' + movie.id)
     }
 
     const curr = "bg-gray-100 w shadow rounded-lg overflow-hidden mb-4"

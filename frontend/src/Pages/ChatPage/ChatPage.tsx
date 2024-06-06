@@ -48,7 +48,7 @@ export const ChatPage = () => {
 
     const [syncedIsPlay, setSyncedIsPlay] = useState(false)
     const [syncedTime, setSyncedTime] = useState(0)
-    const [movieId, setMovieId] = useState(0)
+    const [movieId, setMovieId] = useState('')
 
     let [messageList, setMessageList] = useState<MessageModel[]>([])
     let [movieIdList, setMovieIdList] = useState<number[]>([])
@@ -377,7 +377,7 @@ export const ChatPage = () => {
         }
     }
 
-    const selectMovieToPlay = (id: number) => {
+    const selectMovieToPlay = (id: string) => {
         setMovieId(id)
         const myRoom = localStorage.getItem("roomid")
         setSyncedIsPlay(false)
@@ -414,8 +414,8 @@ export const ChatPage = () => {
     }
 
     const playNext = () => {
-        const list = movieIdList.filter((it) => (it != movieId))
-        setMovieId(list[0] != undefined ? list[0] : 0)
+        const list = movieIdList.filter((it) => ('' + it != movieId))
+        setMovieId(list[0] != undefined ? '' + list[0] : '' + 0)
         updateList(list)
     }
 
@@ -493,9 +493,6 @@ export const ChatPage = () => {
                     playMovie={selectMovieToPlay}
                     onAddClicked={onAddClicked}
                     onRemoveClicked={onRemoveClicked}
-                    roomId={localStorage.getItem("roomid") as string}
-                    token={localStorage.getItem("userRoomToken") as string}
-                    name={user?.username ? user.username : ""}
                 />
             </div>
         </div>
